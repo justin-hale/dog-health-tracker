@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gizmo">
+<meta name="theme-color" content="#0f172a">
+<title>🐾 Gizmo's Health Log</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f172a;
+    --bg2: #1e1b4b;
+    --surface: rgba(255,255,255,0.05);
+    --surface2: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --dim: #475569;
+    --blue: #93c5fd;
+    --blue-bg: rgba(147,197,253,0.15);
+    --green: #86efac;
+    --green-bg: rgba(134,239,172,0.15);
+    --red: #fca5a5;
+    --red-bg: rgba(239,68,68,0.2);
+    --yellow: #fde68a;
+    --yellow-bg: rgba(251,191,36,0.12);
+    --purple: #c4b5fd;
+    --orange: #fb923c;
+    --pink: #fda4af;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 60%, var(--bg) 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  /* Header */
+  .header {
+    background: rgba(15,23,42,0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
+  .header-sub { font-size: 11px; color: var(--dim); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; padding: 14px 20px 0; overflow-x: auto; }
+  .tab {
+    padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 13px;
+    letter-spacing: 0.03em; cursor: pointer; border: none; font-family: inherit;
+    white-space: nowrap; transition: all 0.15s;
+  }
+  .tab.active { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(147,197,253,0.25); }
+  .tab.inactive { background: transparent; color: var(--dim); border: 1px solid transparent; }
+
+  /* Content */
+  .content { max-width: 600px; margin: 0 auto; padding: 16px 16px 40px; }
+
+  /* Section card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 18px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
+    margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
+  }
+
+  /* Field */
+  .field { margin-bottom: 13px; }
+  .field:last-child { margin-bottom: 0; }
+  .label {
+    display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 5px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Inputs */
+  input[type="text"], input[type="number"], input[type="date"],
+  input[type="time"], input[type="password"], select, textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 9px; color: var(--text); padding: 9px 12px; font-size: 14px;
+    font-family: inherit; outline: none; -webkit-appearance: none; appearance: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: rgba(147,197,253,0.4);
+    background: rgba(255,255,255,0.1);
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
+  textarea { min-height: 75px; resize: vertical; }
+  input[type="date"], input[type="time"] { color-scheme: dark; }
+
+  /* Grid */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  /* Checkboxes */
+  .checks { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
+  .check-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border-radius: 9px; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--muted); font-weight: 500; transition: all 0.15s; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .check-label input { display: none; }
+  .check-label.checked { background: var(--green-bg); border-color: rgba(134,239,172,0.35); color: var(--green); font-weight: 600; }
+  .check-label.checked-warn { background: var(--red-bg); border-color: rgba(239,68,68,0.35); color: var(--red); font-weight: 600; }
+  .check-dot { font-size: 11px; }
+
+  /* Alerts */
+  .alert { border-radius: 10px; padding: 10px 13px; font-size: 13px; font-weight: 500; margin-top: 10px; }
+  .alert-danger { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.35); color: var(--red); }
+  .alert-warn { background: var(--yellow-bg); border: 1px solid rgba(251,191,36,0.3); color: var(--yellow); }
+  .alert-info { background: var(--blue-bg); border: 1px solid rgba(147,197,253,0.3); color: var(--blue); }
+
+  /* Save button */
+  .save-btn {
+    width: 100%; padding: 14px; border-radius: 14px; font-size: 15px;
+    font-weight: 800; cursor: pointer; font-family: inherit; letter-spacing: 0.04em;
+    border: 1px solid rgba(147,197,253,0.35); background: var(--blue-bg);
+    color: var(--blue); transition: all 0.2s; margin-top: 4px;
+  }
+  .save-btn.saved { background: var(--green-bg); border-color: rgba(134,239,172,0.4); color: var(--green); }
+  .save-btn.saving { opacity: 0.6; cursor: not-allowed; }
+  .save-btn:active { transform: scale(0.98); }
+
+  /* Icon buttons */
+  .icon-btn {
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--muted);
+    border-radius: 9px; padding: 7px 10px; font-size: 14px; cursor: pointer;
+    font-family: inherit; white-space: nowrap; transition: all 0.15s;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--border2); }
+
+  /* Export button */
+  .export-btn {
+    background: var(--green-bg); border: 1px solid rgba(134,239,172,0.3);
+    color: var(--green); border-radius: 9px; padding: 8px 14px; font-size: 12px;
+    font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+
+  /* Sync badge */
+  #sync-status { font-size: 11px; font-family: 'DM Mono', monospace; white-space: nowrap; }
+
+  /* History cards */
+  .history-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; margin-bottom: 10px;
+  }
+  .history-date { font-weight: 700; font-size: 15px; }
+  .history-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .badge {
+    font-size: 11px; border-radius: 6px; padding: 3px 8px; font-weight: 600;
+    font-family: 'DM Mono', monospace;
+  }
+  .badge-rr-ok { background: var(--green-bg); color: var(--green); border: 1px solid rgba(134,239,172,0.25); }
+  .badge-rr-warn { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+  .badge-weight { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(147,197,253,0.25); }
+  .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .history-notes { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--dim); }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 60px 20px; color: var(--dim); font-size: 15px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 200; padding: 20px; overflow-y: auto;
+  }
+  .modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+  .modal {
+    background: #1a1f35; border: 1px solid var(--border2); border-radius: 20px;
+    padding: 24px; width: 100%; max-width: 500px; margin: auto;
+  }
+  .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+  .modal-desc { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .modal-section { margin-bottom: 20px; }
+  .modal-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; font-family: 'DM Mono', monospace; }
+  .modal-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .modal-row input { flex: 1; }
+  .btn {
+    padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: inherit; border: none; transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-primary { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(147,197,253,0.3); }
+  .btn-secondary { background: var(--surface2); color: var(--muted); border: 1px solid var(--border2); }
+  .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .btn-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(134,239,172,0.3); }
+  .share-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; font-size: 12px; font-family: 'DM Mono', monospace;
+    color: var(--blue); word-break: break-all; margin-bottom: 8px;
+  }
+  .modal-msg { font-size: 12px; margin-top: 8px; min-height: 18px; font-family: 'DM Mono', monospace; }
+
+  @media (max-width: 400px) {
+    .grid3 { grid-template-columns: 1fr 1fr; }
+    .header-title { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">🐾 Gizmo's Health Log</div>
+    <div class="header-sub">CHF Stage C · 12yr · ~8 lbs · Chihuahua mix</div>
+  </div>
+  <div class="header-right">
+    <span id="sync-status"></span>
+    <button class="icon-btn" onclick="openSettings()" title="Cloud sync settings">⚙ Sync</button>
+    <button class="export-btn" onclick="exportCSV()">⬇ CSV</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <div class="modal-title">☁ Cloud Sync Setup</div>
+    <div class="modal-desc">
+      Store entries in a GitHub Gist so history is accessible from any device.
+      Anyone with the share link can view — no login needed to read.
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Step 1 — GitHub Token (stays on this device)</div>
+      <div class="modal-row">
+        <input type="password" id="cfg-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      </div>
+      <div style="font-size:11px;color:var(--dim);line-height:1.6;">
+        Create a token at <strong style="color:var(--muted)">github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong>.
+        Select the <strong style="color:var(--muted)">gist</strong> scope only.
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Step 2 — Gist Storage</div>
+      <div id="gist-no-id">
+        <button class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="handleCreateGist()">
+          ✦ Create new Gist for Gizmo's data
+        </button>
+        <div style="text-align:center;font-size:12px;color:var(--dim);margin-bottom:8px;">— or link an existing Gist —</div>
+        <div class="modal-row">
+          <input type="text" id="cfg-gist-id" placeholder="Gist ID (32-char hex string)">
+          <button class="btn btn-secondary" onclick="handleLinkGist()">Link</button>
+        </div>
+      </div>
+      <div id="gist-has-id" style="display:none;">
+        <div class="alert alert-info" style="margin-top:0;margin-bottom:10px;">
+          ✓ Gist linked: <span id="gist-id-display" style="font-family:'DM Mono',monospace;font-size:11px;word-break:break-all;"></span>
+        </div>
+        <button class="btn btn-danger" style="font-size:12px;" onclick="handleUnlinkGist()">✕ Unlink Gist</button>
+      </div>
+      <div class="modal-msg" id="gist-msg"></div>
+    </div>
+
+    <div class="modal-section" id="share-section" style="display:none;">
+      <div class="modal-section-title">Share Link (read-only for anyone)</div>
+      <div class="share-box" id="share-link-box"></div>
+      <button class="btn btn-green" style="width:100%;" onclick="copyShareLink()">⎘ Copy share link</button>
+      <div class="modal-msg" id="copy-msg"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="saveSettings()">Save Settings</button>
+      <button class="btn btn-secondary" onclick="closeSettings()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tab-today" onclick="switchTab('today')">Today's Log</button>
+  <button class="tab inactive" id="tab-history" onclick="switchTab('history')">History (<span id="hist-count">0</span>)</button>
+</div>
+
+<!-- TODAY FORM -->
+<div class="content" id="pane-today">
+
+  <div class="field" style="margin-bottom:14px;">
+    <label class="label">Log Date</label>
+    <input type="date" id="f-date">
+  </div>
+
+  <!-- Medications -->
+  <div class="card">
+    <div class="card-title" style="color:var(--purple)">💊 Medications Given</div>
+    <div class="checks">
+      <label class="check-label" id="lbl-pimo_am"><input type="checkbox" id="f-pimo_am" onchange="updateCheck('pimo_am')"><span class="check-dot">○</span> Pimobendan AM</label>
+      <label class="check-label" id="lbl-pimo_pm"><input type="checkbox" id="f-pimo_pm" onchange="updateCheck('pimo_pm')"><span class="check-dot">○</span> Pimobendan PM</label>
+      <label class="check-label" id="lbl-enalapril"><input type="checkbox" id="f-enalapril" onchange="updateCheck('enalapril')"><span class="check-dot">○</span> Enalapril</label>
+      <label class="check-label" id="lbl-furo_am"><input type="checkbox" id="f-furo_am" onchange="updateCheck('furo_am')"><span class="check-dot">○</span> Furosemide AM</label>
+      <label class="check-label" id="lbl-furo_pm"><input type="checkbox" id="f-furo_pm" onchange="updateCheck('furo_pm')"><span class="check-dot">○</span> Furosemide PM</label>
+    </div>
+  </div>
+
+  <!-- Respiratory -->
+  <div class="card">
+    <div class="card-title" style="color:var(--pink)">🫁 Respiratory — #1 Priority</div>
+    <div class="grid2">
+      <div class="field">
+        <label class="label">Resting RR (breaths/min)</label>
+        <input type="number" id="f-rr" placeholder="e.g. 22" oninput="checkRR()">
+      </div>
+      <div class="field">
+        <label class="label">Time Measured</label>
+        <input type="time" id="f-rr_time">
+      </div>
+    </div>
+    <div id="rr-alert"></div>
+    <div class="field">
+      <label class="label">Breathing Quality at Rest</label>
+      <select id="f-breathing_quality">
+        <option value="">Select...</option>
+        <option>Normal</option>
+        <option>Slightly labored</option>
+        <option>Labored</option>
+        <option>Very labored</option>
+      </select>
+    </div>
+    <div class="checks">
+      <label class="check-label" id="lbl-coughing"><input type="checkbox" id="f-coughing" onchange="updateCheck('coughing')"><span class="check-dot">○</span> Coughing today</label>
+      <label class="check-label check-warn" id="lbl-collapse"><input type="checkbox" id="f-collapse" onchange="updateCheck('collapse'); checkCollapse()"><span class="check-dot">○</span> Collapse episode 🚨</label>
+    </div>
+    <div id="collapse-field" style="display:none; margin-top:12px;">
+      <div class="field">
+        <label class="label">Describe episode</label>
+        <input type="text" id="f-cough_desc" placeholder="When, duration, severity...">
+      </div>
+    </div>
+  </div>
+
+  <!-- Eating & Drinking -->
+  <div class="card">
+    <div class="card-title" style="color:var(--green)">🍗 Eating & Drinking</div>
+    <div class="field">
+      <label class="label">Appetite Overall</label>
+      <select id="f-appetite">
+        <option value="">Select...</option>
+        <option>Great — ate everything</option>
+        <option>Good — ate most</option>
+        <option>Fair — ate some</option>
+        <option>Poor — ate little</option>
+        <option>None — refused food</option>
+      </select>
+    </div>
+    <div class="grid3">
+      <div class="field">
+        <label class="label">AM Meal (cups)</label>
+        <input type="number" id="f-food_am" placeholder="0.3" step="0.05">
+      </div>
+      <div class="field">
+        <label class="label">Mid Meal (cups)</label>
+        <input type="number" id="f-food_mid" placeholder="0.3" step="0.05">
+      </div>
+      <div class="field">
+        <label class="label">PM Meal (cups)</label>
+        <input type="number" id="f-food_pm" placeholder="0.3" step="0.05">
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">Water Intake</label>
+      <select id="f-water_intake">
+        <option value="">Select...</option>
+        <option>Normal</option>
+        <option>More than usual</option>
+        <option>Less than usual</option>
+        <option>Not drinking</option>
+      </select>
+    </div>
+    <div class="checks">
+      <label class="check-label" id="lbl-wet_topper"><input type="checkbox" id="f-wet_topper" onchange="updateCheck('wet_topper')"><span class="check-dot">○</span> Wet topper</label>
+      <label class="check-label" id="lbl-fish_oil"><input type="checkbox" id="f-fish_oil" onchange="updateCheck('fish_oil')"><span class="check-dot">○</span> Fish oil</label>
+      <label class="check-label" id="lbl-sardines"><input type="checkbox" id="f-sardines" onchange="updateCheck('sardines')"><span class="check-dot">○</span> Sardines (skip oil)</label>
+      <label class="check-label" id="lbl-vomiting"><input type="checkbox" id="f-vomiting" onchange="updateCheck('vomiting')"><span class="check-dot">○</span> Vomiting today</label>
+    </div>
+  </div>
+
+  <!-- Urination -->
+  <div class="card">
+    <div class="card-title" style="color:var(--yellow)">💧 Urination — Prostate & Kidney Monitor</div>
+    <div class="grid2">
+      <div class="field">
+        <label class="label">Times Urinated</label>
+        <input type="number" id="f-urination_count" placeholder="e.g. 5">
+      </div>
+      <div class="field">
+        <label class="label">Urine Color</label>
+        <select id="f-urine_color">
+          <option value="">Select...</option>
+          <option>Clear / pale yellow</option>
+          <option>Yellow</option>
+          <option>Dark yellow</option>
+          <option>Orange / brown</option>
+          <option>Pink / red</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">Stream Quality</label>
+      <select id="f-urination_quality">
+        <option value="">Select...</option>
+        <option>Normal stream</option>
+        <option>Weak stream</option>
+        <option>Dribbling</option>
+        <option>Marking only</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="label">Straining to Urinate</label>
+      <select id="f-straining" onchange="checkStraining()">
+        <option value="">Select...</option>
+        <option>None</option>
+        <option>Mild</option>
+        <option>Significant</option>
+      </select>
+    </div>
+    <div class="checks">
+      <label class="check-label" id="lbl-blood_urine"><input type="checkbox" id="f-blood_urine" onchange="updateCheck('blood_urine'); checkBlood()"><span class="check-dot">○</span> Blood in urine 🚨</label>
+    </div>
+    <div id="blood-alert"></div>
+    <div id="strain-alert"></div>
+  </div>
+
+  <!-- Defecation -->
+  <div class="card">
+    <div class="card-title" style="color:var(--purple)">🌿 Bowel Movements</div>
+    <div class="grid2">
+      <div class="field">
+        <label class="label">Times Today</label>
+        <input type="number" id="f-bowel_count" placeholder="e.g. 2">
+      </div>
+      <div class="field">
+        <label class="label">Stool Quality</label>
+        <select id="f-stool_quality">
+          <option value="">Select...</option>
+          <option>Normal formed</option>
+          <option>Soft</option>
+          <option>Loose</option>
+          <option>Diarrhea</option>
+          <option>None today</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wellness -->
+  <div class="card">
+    <div class="card-title" style="color:var(--blue)">🩺 General Wellness</div>
+    <div class="field">
+      <label class="label">Energy Level</label>
+      <select id="f-energy">
+        <option value="">Select...</option>
+        <option>High — very playful</option>
+        <option>Normal for Gizmo</option>
+        <option>Lower than usual</option>
+        <option>Lethargic</option>
+        <option>Very lethargic</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="label">Gum Color</label>
+      <select id="f-gum_color" onchange="checkGums()">
+        <option value="">Select...</option>
+        <option>Pink & moist ✓</option>
+        <option>Pale pink</option>
+        <option>White / gray ⚠️</option>
+        <option>Blue / purple 🚨</option>
+      </select>
+    </div>
+    <div id="gum-alert"></div>
+    <div class="field">
+      <label class="label">Weight (lbs) — weigh weekly</label>
+      <input type="number" id="f-weight" placeholder="Leave blank on non-weigh days" step="0.1">
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="card">
+    <div class="card-title" style="color:var(--orange)">📝 Notes for Vet</div>
+    <div class="field">
+      <textarea id="f-notes" placeholder="Any behavioral changes, unusual symptoms, questions for next appointment..."></textarea>
+    </div>
+  </div>
+
+  <button class="save-btn" id="save-btn" onclick="saveEntry()">Save Today's Log</button>
+</div>
+
+<!-- HISTORY PANE -->
+<div class="content" id="pane-history" style="display:none;">
+  <div id="history-list"></div>
+</div>
+
+<script>
+const STORAGE_KEY = 'gizmo-health-log-v1';
+const CONFIG_KEY  = 'gizmo-config-v1';
+const GIST_FILE   = 'gizmo-log.json';
+
+let log = [];
+let cfg = { gistId: '', token: '' };
+
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ── Config ────────────────────────────────────────────────────────────────────
+
+function loadConfig() {
+  try {
+    const s = localStorage.getItem(CONFIG_KEY);
+    if (s) cfg = { ...cfg, ...JSON.parse(s) };
+  } catch(e) {}
+  // URL ?gist= param overrides stored ID (for share links)
+  const urlGist = new URLSearchParams(window.location.search).get('gist');
+  if (urlGist) cfg.gistId = urlGist;
+}
+
+function persistConfig() {
+  try { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); } catch(e) {}
+}
+
+// ── Gist API ──────────────────────────────────────────────────────────────────
+
+async function gistGet() {
+  if (!cfg.gistId) return null;
+  try {
+    const headers = cfg.token ? { 'Authorization': `token ${cfg.token}` } : {};
+    const r = await fetch(`https://api.github.com/gists/${cfg.gistId}`, { headers });
+    if (!r.ok) return null;
+    const g = await r.json();
+    const content = g.files[GIST_FILE]?.content;
+    return content ? JSON.parse(content) : null;
+  } catch(e) { return null; }
+}
+
+async function gistPatch() {
+  if (!cfg.gistId || !cfg.token) return false;
+  try {
+    const r = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `token ${cfg.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(log) } } })
+    });
+    return r.ok;
+  } catch(e) { return false; }
+}
+
+async function gistCreate(token) {
+  try {
+    const r = await fetch('https://api.github.com/gists', {
+      method: 'POST',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        description: "Gizmo's Health Log",
+        public: false,
+        files: { [GIST_FILE]: { content: '[]' } }
+      })
+    });
+    if (!r.ok) return null;
+    const g = await r.json();
+    return g.id;
+  } catch(e) { return null; }
+}
+
+// ── Log load / save ───────────────────────────────────────────────────────────
+
+async function loadLog() {
+  loadConfig();
+  setSyncStatus('loading');
+
+  if (cfg.gistId) {
+    const data = await gistGet();
+    if (data !== null) {
+      log = data;
+      localCacheWrite();
+      document.getElementById('hist-count').textContent = log.length;
+      setSyncStatus(cfg.token ? 'synced' : 'readonly');
+      return;
+    }
+    setSyncStatus('error');
+  } else {
+    setSyncStatus('local');
+  }
+
+  // Fallback: localStorage cache
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) log = JSON.parse(s);
+  } catch(e) { log = []; }
+  document.getElementById('hist-count').textContent = log.length;
+}
+
+async function saveLog() {
+  localCacheWrite();
+  if (!cfg.gistId || !cfg.token) { setSyncStatus('local'); return true; }
+  setSyncStatus('loading');
+  const ok = await gistPatch();
+  setSyncStatus(ok ? 'synced' : 'error');
+  return ok;
+}
+
+function localCacheWrite() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(log)); } catch(e) {}
+}
+
+// ── Sync status badge ─────────────────────────────────────────────────────────
+
+function setSyncStatus(state) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const map = {
+    loading:  ['⟳', 'Syncing…',    'var(--dim)'],
+    synced:   ['☁', 'Synced',      'var(--green)'],
+    readonly: ['👁', 'View-only',   'var(--blue)'],
+    local:    ['💾', 'Local only',  'var(--yellow)'],
+    error:    ['⚠', 'Sync error',  'var(--red)'],
+  };
+  const [icon, text, color] = map[state] || map.local;
+  el.innerHTML = `<span style="color:${color}">${icon} ${text}</span>`;
+}
+
+// ── Form helpers ──────────────────────────────────────────────────────────────
+
+function getFormData() {
+  const checkIds = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm','coughing','collapse','wet_topper','fish_oil','sardines','vomiting','blood_urine'];
+  const textIds  = ['rr','rr_time','breathing_quality','appetite','food_am','food_mid','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes','cough_desc'];
+  const data = { date: document.getElementById('f-date').value };
+  textIds.forEach(id => data[id] = document.getElementById('f-'+id)?.value || '');
+  checkIds.forEach(id => data[id] = document.getElementById('f-'+id)?.checked || false);
+  return data;
+}
+
+function setFormData(data) {
+  if (!data) return;
+  const checkIds = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm','coughing','collapse','wet_topper','fish_oil','sardines','vomiting','blood_urine'];
+  const textIds  = ['date','rr','rr_time','breathing_quality','appetite','food_am','food_mid','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes','cough_desc'];
+  textIds.forEach(id => { const el = document.getElementById('f-'+id); if(el) el.value = data[id] || ''; });
+  checkIds.forEach(id => {
+    const el = document.getElementById('f-'+id);
+    if (el) { el.checked = !!data[id]; syncCheckLabel(id, !!data[id]); }
+  });
+  checkRR(); checkGums(); checkBlood(); checkStraining(); checkCollapse();
+}
+
+function syncCheckLabel(id, checked) {
+  const lbl = document.getElementById('lbl-'+id);
+  if (!lbl) return;
+  const dot = lbl.querySelector('.check-dot');
+  const isWarn = ['blood_urine','collapse'].includes(id);
+  lbl.className = 'check-label' + (checked ? (isWarn ? ' checked-warn' : ' checked') : '');
+  if (dot) dot.textContent = checked ? '✓' : '○';
+}
+
+function updateCheck(id) {
+  const checked = document.getElementById('f-'+id)?.checked;
+  syncCheckLabel(id, checked);
+}
+
+// ── Alert helpers ─────────────────────────────────────────────────────────────
+
+function checkRR() {
+  const val = parseFloat(document.getElementById('f-rr').value);
+  const el  = document.getElementById('rr-alert');
+  if (val >= 40) el.innerHTML = '<div class="alert alert-danger">🚨 RR ≥ 40 — Go to ER immediately</div>';
+  else if (val >= 30) el.innerHTML = '<div class="alert alert-warn">⚠️ RR ≥ 30 — Call your vet today</div>';
+  else el.innerHTML = '';
+}
+
+function checkGums() {
+  const val = document.getElementById('f-gum_color').value;
+  const el  = document.getElementById('gum-alert');
+  if (val.includes('White') || val.includes('Blue')) el.innerHTML = '<div class="alert alert-danger">🚨 Abnormal gum color — Emergency vet immediately</div>';
+  else el.innerHTML = '';
+}
+
+function checkBlood() {
+  const checked = document.getElementById('f-blood_urine').checked;
+  document.getElementById('blood-alert').innerHTML = checked ? '<div class="alert alert-danger">🚨 Blood in urine — call vet today</div>' : '';
+}
+
+function checkStraining() {
+  const val = document.getElementById('f-straining').value;
+  document.getElementById('strain-alert').innerHTML = val === 'Significant' ? '<div class="alert alert-warn">⚠️ Significant straining — mention to vet (prostate concern)</div>' : '';
+}
+
+function checkCollapse() {
+  const checked = document.getElementById('f-collapse').checked;
+  document.getElementById('collapse-field').style.display = checked ? 'block' : 'none';
+}
+
+// ── Save entry ────────────────────────────────────────────────────────────────
+
+async function saveEntry() {
+  const data = getFormData();
+  if (!data.date) { alert('Please set a date before saving.'); return; }
+
+  log = log.filter(e => e.date !== data.date);
+  log.push(data);
+  log.sort((a,b) => b.date.localeCompare(a.date));
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '⟳ Saving…';
+  btn.classList.add('saving');
+  btn.disabled = true;
+
+  await saveLog();
+
+  document.getElementById('hist-count').textContent = log.length;
+  btn.textContent = '✓ Saved!';
+  btn.classList.remove('saving');
+  btn.classList.add('saved');
+  btn.disabled = false;
+  setTimeout(() => { btn.textContent = "Save Today's Log"; btn.classList.remove('saved'); }, 2500);
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  document.getElementById('pane-today').style.display   = tab === 'today'   ? 'block' : 'none';
+  document.getElementById('pane-history').style.display = tab === 'history' ? 'block' : 'none';
+  document.getElementById('tab-today').className   = 'tab ' + (tab === 'today'   ? 'active' : 'inactive');
+  document.getElementById('tab-history').className = 'tab ' + (tab === 'history' ? 'active' : 'inactive');
+  if (tab === 'history') renderHistory();
+}
+
+// ── History render ────────────────────────────────────────────────────────────
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!log.length) { el.innerHTML = '<div class="empty">No entries yet — start logging today!</div>'; return; }
+  el.innerHTML = log.map(e => {
+    const d = new Date(e.date + 'T12:00:00');
+    const dateStr = `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    const rrNum = parseFloat(e.rr);
+    const rrBadge = e.rr ? `<span class="badge ${rrNum >= 30 ? 'badge-rr-warn' : 'badge-rr-ok'}">RR ${e.rr} bpm</span>` : '';
+    const wtBadge = e.weight ? `<span class="badge badge-weight">${e.weight} lbs</span>` : '';
+    const medCount = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm'].filter(k => e[k]).length;
+    const rows = [
+      e.appetite        ? ['😋 Appetite', e.appetite.split('—')[0].trim()]       : null,
+      e.energy          ? ['⚡ Energy',   e.energy.split('—')[0].trim()]          : null,
+      e.urination_count ? ['💧 Urination', e.urination_count + 'x']              : null,
+      e.gum_color       ? ['🦷 Gums',     e.gum_color]                           : null,
+      e.stool_quality   ? ['🌿 Stool',    e.stool_quality]                       : null,
+      ['💊 Meds', `${medCount}/5 given`],
+    ].filter(Boolean);
+    return `
+      <div class="history-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="history-date">${dateStr}</div>
+        </div>
+        <div class="history-badges">${rrBadge}${wtBadge}</div>
+        <div class="history-grid">${rows.map(([k,v]) => `<div><span style="color:var(--dim)">${k}</span> ${v}</div>`).join('')}</div>
+        ${e.notes ? `<div class="history-notes">📝 ${e.notes}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+
+function exportCSV() {
+  if (!log.length) { alert('No entries to export yet.'); return; }
+  const keys = ['date','pimo_am','pimo_pm','enalapril','furo_am','furo_pm','rr','rr_time','breathing_quality','coughing','collapse','cough_desc','appetite','food_am','food_mid','food_pm','water_intake','wet_topper','fish_oil','sardines','vomiting','urination_count','urine_color','urination_quality','straining','blood_urine','bowel_count','stool_quality','energy','gum_color','weight','notes'];
+  const header = keys.join(',');
+  const rows = log.map(e => keys.map(k => {
+    const v = e[k] ?? '';
+    return String(v).includes(',') ? `"${v}"` : v;
+  }).join(','));
+  const csv  = [header, ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `gizmo-log-${today()}.csv`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ── Settings modal ────────────────────────────────────────────────────────────
+
+function openSettings() {
+  document.getElementById('cfg-token').value   = cfg.token   || '';
+  document.getElementById('cfg-gist-id').value = cfg.gistId  || '';
+  refreshGistUI();
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+function refreshGistUI() {
+  const hasId = !!cfg.gistId;
+  document.getElementById('gist-no-id').style.display  = hasId ? 'none'  : 'block';
+  document.getElementById('gist-has-id').style.display  = hasId ? 'block' : 'none';
+  document.getElementById('share-section').style.display = hasId ? 'block' : 'none';
+  if (hasId) {
+    document.getElementById('gist-id-display').textContent = cfg.gistId;
+    document.getElementById('share-link-box').textContent  = buildShareLink();
+  }
+}
+
+function buildShareLink() {
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?gist=${cfg.gistId}`;
+}
+
+async function handleCreateGist() {
+  const token = document.getElementById('cfg-token').value.trim();
+  if (!token) { showGistMsg('Enter your GitHub token first.', 'var(--red)'); return; }
+  showGistMsg('Creating Gist…', 'var(--dim)');
+  const id = await gistCreate(token);
+  if (!id) { showGistMsg('Failed — check your token has the gist scope.', 'var(--red)'); return; }
+  cfg.token  = token;
+  cfg.gistId = id;
+  persistConfig();
+  showGistMsg('Gist created!', 'var(--green)');
+  refreshGistUI();
+}
+
+async function handleLinkGist() {
+  const token = document.getElementById('cfg-token').value.trim();
+  const id    = document.getElementById('cfg-gist-id').value.trim();
+  if (!id) { showGistMsg('Enter a Gist ID.', 'var(--red)'); return; }
+  cfg.token  = token;
+  cfg.gistId = id;
+  persistConfig();
+  refreshGistUI();
+  showGistMsg('Gist linked!', 'var(--green)');
+}
+
+function handleUnlinkGist() {
+  if (!confirm('Unlink this Gist? Local cache is kept. You can re-link anytime.')) return;
+  cfg.gistId = '';
+  persistConfig();
+  refreshGistUI();
+  setSyncStatus('local');
+}
+
+function saveSettings() {
+  const token = document.getElementById('cfg-token').value.trim();
+  cfg.token   = token;
+  persistConfig();
+  closeSettings();
+  loadLog();
+}
+
+function showGistMsg(msg, color) {
+  const el = document.getElementById('gist-msg');
+  el.textContent = msg;
+  el.style.color = color;
+}
+
+function copyShareLink() {
+  const link = buildShareLink();
+  navigator.clipboard.writeText(link).then(() => {
+    const el = document.getElementById('copy-msg');
+    el.textContent = '✓ Copied to clipboard!';
+    el.style.color = 'var(--green)';
+    setTimeout(() => { el.textContent = ''; }, 3000);
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+(async () => {
+  document.getElementById('f-date').value = today();
+  await loadLog();
+  const todayEntry = log.find(e => e.date === today());
+  if (todayEntry) setFormData(todayEntry);
+})();
+</script>
+</body>
+</html>
