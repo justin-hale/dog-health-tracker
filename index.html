@@ -297,6 +297,7 @@
 <div class="tabs">
   <button class="tab active" id="tab-today" onclick="switchTab('today')">Today's Log</button>
   <button class="tab inactive" id="tab-history" onclick="switchTab('history')">History (<span id="hist-count">0</span>)</button>
+  <button class="tab inactive" id="tab-vetinfo" onclick="switchTab('vetinfo')">Vet Info</button>
 </div>
 
 <!-- TODAY FORM -->
@@ -516,14 +517,146 @@
   <div id="history-list"></div>
 </div>
 
+<!-- VET INFO PANE -->
+<div class="content" id="pane-vetinfo" style="display:none;">
+
+  <!-- Food & Diet -->
+  <div class="card">
+    <div class="card-title" style="color:var(--green)">🍗 Food & Diet</div>
+    <div class="field">
+      <label class="label">Food Brand / Name</label>
+      <input type="text" id="vi-food_name" placeholder="e.g. Hill's Science Diet Adult Small Paws">
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label class="label">Food Type</label>
+        <select id="vi-food_type">
+          <option value="">Select...</option>
+          <option>Dry kibble</option>
+          <option>Wet food</option>
+          <option>Dry + wet topper</option>
+          <option>Raw</option>
+          <option>Home cooked</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label">Daily Amount (cups)</label>
+        <input type="number" id="vi-daily_amount" placeholder="e.g. 0.75" step="0.05">
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">Wet Topper Brand (if used)</label>
+      <input type="text" id="vi-topper_name" placeholder="e.g. Weruva Paw Lickin' Chicken">
+    </div>
+  </div>
+
+  <!-- Nutritional Values -->
+  <div class="card">
+    <div class="card-title" style="color:var(--blue)">📊 Nutritional Values (per label)</div>
+    <div class="grid2">
+      <div class="field">
+        <label class="label">Calories (kcal/cup)</label>
+        <input type="number" id="vi-calories" placeholder="e.g. 363">
+      </div>
+      <div class="field">
+        <label class="label">Protein (%)</label>
+        <input type="number" id="vi-protein" placeholder="e.g. 24.5" step="0.1">
+      </div>
+      <div class="field">
+        <label class="label">Fat (%)</label>
+        <input type="number" id="vi-fat" placeholder="e.g. 14.5" step="0.1">
+      </div>
+      <div class="field">
+        <label class="label">Fiber (%)</label>
+        <input type="number" id="vi-fiber" placeholder="e.g. 4.0" step="0.1">
+      </div>
+      <div class="field">
+        <label class="label">Sodium (mg/100kcal)</label>
+        <input type="number" id="vi-sodium" placeholder="e.g. 95" step="1">
+      </div>
+      <div class="field">
+        <label class="label">Phosphorus (%)</label>
+        <input type="number" id="vi-phosphorus" placeholder="e.g. 0.6" step="0.01">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.6;">
+      For cardiac patients, target sodium &lt;100 mg/100kcal and phosphorus &lt;0.8% (dry matter).
+    </div>
+  </div>
+
+  <!-- Supplements -->
+  <div class="card">
+    <div class="card-title" style="color:var(--yellow)">💊 Supplements</div>
+    <div class="field">
+      <label class="label">Fish Oil</label>
+      <input type="text" id="vi-fish_oil_dose" placeholder="e.g. Nordic Naturals, 1000mg EPA+DHA daily">
+    </div>
+    <div class="field">
+      <label class="label">Other Supplements</label>
+      <textarea id="vi-supplements" placeholder="List any other supplements, dosage, and frequency..."></textarea>
+    </div>
+  </div>
+
+  <!-- Medications Reference -->
+  <div class="card">
+    <div class="card-title" style="color:var(--purple)">💉 Medication Doses (reference)</div>
+    <div class="grid2">
+      <div class="field">
+        <label class="label">Pimobendan</label>
+        <input type="text" id="vi-dose_pimo" placeholder="e.g. 1.25mg twice daily">
+      </div>
+      <div class="field">
+        <label class="label">Enalapril</label>
+        <input type="text" id="vi-dose_enalapril" placeholder="e.g. 2.5mg once daily">
+      </div>
+      <div class="field">
+        <label class="label">Furosemide</label>
+        <input type="text" id="vi-dose_furo" placeholder="e.g. 12.5mg twice daily">
+      </div>
+      <div class="field">
+        <label class="label">Other Medications</label>
+        <input type="text" id="vi-dose_other" placeholder="Name, dose, frequency">
+      </div>
+    </div>
+  </div>
+
+  <!-- Vet Contact -->
+  <div class="card">
+    <div class="card-title" style="color:var(--orange)">🏥 Vet Contact</div>
+    <div class="grid2">
+      <div class="field">
+        <label class="label">Vet / Clinic Name</label>
+        <input type="text" id="vi-vet_name" placeholder="e.g. Banfield Pet Hospital">
+      </div>
+      <div class="field">
+        <label class="label">Phone</label>
+        <input type="text" id="vi-vet_phone" placeholder="e.g. (555) 123-4567">
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">Next Appointment</label>
+      <input type="date" id="vi-next_appt">
+    </div>
+    <div class="field">
+      <label class="label">Notes / Questions for Vet</label>
+      <textarea id="vi-vet_notes" placeholder="Ongoing concerns, questions to raise at next visit..."></textarea>
+    </div>
+  </div>
+
+  <button class="save-btn" id="vi-save-btn" onclick="saveVetInfo()">Save Vet Info</button>
+</div>
+
 <script>
 const STORAGE_KEY    = 'gizmo-health-log-v1';
+const INFO_KEY       = 'gizmo-info-v1';
 const CONFIG_KEY     = 'gizmo-config-v1';
 const GIST_FILE      = 'gizmo-log.json';
+const INFO_FILE      = 'gizmo-info.json';
 // ← Paste your Gist ID here once, push, and the page always loads this data
 const DEFAULT_GIST_ID = '0373bd12fe6f428a93b3e69e05d46e13';
 
 let log = [];
+let vetInfo = {};
 let cfg = { gistId: '', token: '' };
 
 const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -553,15 +686,19 @@ function persistConfig() {
 
 // ── Gist API ──────────────────────────────────────────────────────────────────
 
-async function gistGet() {
+async function gistFetchAll() {
   if (!cfg.gistId) return null;
   try {
     const headers = cfg.token ? { 'Authorization': `token ${cfg.token}` } : {};
     const r = await fetch(`https://api.github.com/gists/${cfg.gistId}`, { headers });
     if (!r.ok) return null;
     const g = await r.json();
-    const content = g.files[GIST_FILE]?.content;
-    return content ? JSON.parse(content) : null;
+    const logContent  = g.files[GIST_FILE]?.content;
+    const infoContent = g.files[INFO_FILE]?.content;
+    return {
+      log:  logContent  ? JSON.parse(logContent)  : null,
+      info: infoContent ? JSON.parse(infoContent) : null,
+    };
   } catch(e) { return null; }
 }
 
@@ -571,7 +708,10 @@ async function gistPatch() {
     const r = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
       method: 'PATCH',
       headers: { 'Authorization': `token ${cfg.token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(log) } } })
+      body: JSON.stringify({ files: {
+        [GIST_FILE]: { content: JSON.stringify(log) },
+        [INFO_FILE]:  { content: JSON.stringify(vetInfo) },
+      }})
     });
     return r.ok;
   } catch(e) { return false; }
@@ -585,7 +725,10 @@ async function gistCreate(token) {
       body: JSON.stringify({
         description: "Gizmo's Health Log",
         public: false,
-        files: { [GIST_FILE]: { content: '[]' } }
+        files: {
+          [GIST_FILE]: { content: '[]' },
+          [INFO_FILE]:  { content: '{}' },
+        }
       })
     });
     if (!r.ok) return null;
@@ -601,10 +744,10 @@ async function loadLog() {
   setSyncStatus('loading');
 
   if (cfg.gistId) {
-    const data = await gistGet();
+    const data = await gistFetchAll();
     if (data !== null) {
-      log = data;
-      localCacheWrite();
+      if (data.log  !== null) { log     = data.log;  localCacheWrite(); }
+      if (data.info !== null) { vetInfo = data.info; localInfoWrite();  }
       document.getElementById('hist-count').textContent = log.length;
       setSyncStatus(cfg.token ? 'synced' : 'readonly');
       return;
@@ -619,6 +762,10 @@ async function loadLog() {
     const s = localStorage.getItem(STORAGE_KEY);
     if (s) log = JSON.parse(s);
   } catch(e) { log = []; }
+  try {
+    const s = localStorage.getItem(INFO_KEY);
+    if (s) vetInfo = JSON.parse(s);
+  } catch(e) { vetInfo = {}; }
   document.getElementById('hist-count').textContent = log.length;
 }
 
@@ -633,6 +780,10 @@ async function saveLog() {
 
 function localCacheWrite() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(log)); } catch(e) {}
+}
+
+function localInfoWrite() {
+  try { localStorage.setItem(INFO_KEY, JSON.stringify(vetInfo)); } catch(e) {}
 }
 
 // ── Sync status badge ─────────────────────────────────────────────────────────
@@ -748,11 +899,12 @@ async function saveEntry() {
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 
 function switchTab(tab) {
-  document.getElementById('pane-today').style.display   = tab === 'today'   ? 'block' : 'none';
-  document.getElementById('pane-history').style.display = tab === 'history' ? 'block' : 'none';
-  document.getElementById('tab-today').className   = 'tab ' + (tab === 'today'   ? 'active' : 'inactive');
-  document.getElementById('tab-history').className = 'tab ' + (tab === 'history' ? 'active' : 'inactive');
+  ['today','history','vetinfo'].forEach(t => {
+    document.getElementById('pane-'+t).style.display = tab === t ? 'block' : 'none';
+    document.getElementById('tab-'+t).className = 'tab ' + (tab === t ? 'active' : 'inactive');
+  });
   if (tab === 'history') renderHistory();
+  if (tab === 'vetinfo') populateVetInfoForm();
 }
 
 // ── History render ────────────────────────────────────────────────────────────
@@ -888,6 +1040,44 @@ function copyShareLink() {
     el.style.color = 'var(--green)';
     setTimeout(() => { el.textContent = ''; }, 3000);
   });
+}
+
+// ── Vet Info ──────────────────────────────────────────────────────────────────
+
+const VI_FIELDS = ['food_name','food_type','daily_amount','topper_name','calories','protein','fat','fiber','sodium','phosphorus','fish_oil_dose','supplements','dose_pimo','dose_enalapril','dose_furo','dose_other','vet_name','vet_phone','next_appt','vet_notes'];
+
+function populateVetInfoForm() {
+  VI_FIELDS.forEach(id => {
+    const el = document.getElementById('vi-'+id);
+    if (el) el.value = vetInfo[id] || '';
+  });
+}
+
+function collectVetInfoForm() {
+  const data = {};
+  VI_FIELDS.forEach(id => {
+    const el = document.getElementById('vi-'+id);
+    if (el) data[id] = el.value;
+  });
+  return data;
+}
+
+async function saveVetInfo() {
+  vetInfo = collectVetInfoForm();
+  localInfoWrite();
+
+  const btn = document.getElementById('vi-save-btn');
+  btn.textContent = '⟳ Saving…';
+  btn.classList.add('saving');
+  btn.disabled = true;
+
+  await saveLog(); // patches both log + vetInfo to Gist in one call
+
+  btn.textContent = '✓ Saved!';
+  btn.classList.remove('saving');
+  btn.classList.add('saved');
+  btn.disabled = false;
+  setTimeout(() => { btn.textContent = 'Save Vet Info'; btn.classList.remove('saved'); }, 2500);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
