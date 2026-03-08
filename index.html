@@ -349,7 +349,7 @@
   }
   .contact-row:last-child { border-bottom: none; }
   .contact-icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
-  .contact-label { color: var(--dim); font-size: 11px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.07em; }
+  .contact-label { color: rgba(255,255,255,0.6); font-size: 11px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.07em; }
   .contact-val { font-weight: 600; color: var(--text); }
 
   @media print {
@@ -441,7 +441,7 @@
   <button class="tab active" id="tab-today" onclick="switchTab('today')">Today's Log</button>
   <button class="tab inactive" id="tab-history" onclick="switchTab('history')">History (<span id="hist-count">0</span>)</button>
   <button class="tab inactive" id="tab-vetinfo" onclick="switchTab('vetinfo')">Vet Info</button>
-  <button class="tab inactive" id="tab-careguide" onclick="switchTab('careguide')">🏠 Care Guide</button>
+  <button class="tab inactive" id="tab-careguide" onclick="switchTab('careguide')">Care Guide</button>
 </div>
 
 <!-- TODAY FORM -->
@@ -862,11 +862,20 @@
       <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);">615-681-1614</div>
     </div>
     <div class="contact-row">
+      <span class="contact-icon">👤</span>
+      <div>
+        <div class="contact-label">Owner</div>
+        <div class="contact-val">Christina Hale</div>
+      </div>
+      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);">615-870-4431</div>
+    </div>
+    <div class="contact-row">
       <span class="contact-icon">🏥</span>
       <div>
         <div class="contact-label">Primary Vet — Stark Animal Hospital</div>
-        <div class="contact-val">Call first for non-urgent concerns</div>
+        <div class="contact-val">3900 Cleveland Ave NW, Canton, OH</div>
       </div>
+      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);">330-492-2444</div>
     </div>
     <div class="contact-row">
       <span class="contact-icon">🚑</span>
@@ -927,11 +936,11 @@
 
       <div class="timeline-item">
         <div class="timeline-dot dot-pink"></div>
-        <div class="tl-time">ANYTIME MORNING · WHILE HE'S SLEEPING</div>
+        <div class="tl-time">ANYTIME · WHILE HE'S SLEEPING</div>
         <div class="tl-title" style="color:var(--pink)">🫁 Check Resting Respiratory Rate (once daily)</div>
         <div class="tl-body">
           Catch him sleeping whenever you can and count his breaths. Count for 30 seconds, multiply by 2.
-          <strong>Under 30 = normal.</strong> If it's 30–35 call Justin. <strong>Over 40 = ER immediately.</strong>
+          <strong>Under 30 = normal.</strong> If it's 40+ call Justin. <strong>Over 60+, call ER immediately.</strong>
           See the full how-to section below.
         </div>
       </div>
@@ -1054,7 +1063,7 @@
         <div class="food-name">Kirkland Dry Kibble (pre-soaked)</div>
         <div class="food-detail">Red bag · Chicken, Rice &amp; Vegetable · soaked overnight in plain water</div>
       </div>
-      <div class="food-amount">½ cup<br><span style="font-size:10px;color:var(--dim)">per meal × 2</span></div>
+      <div class="food-amount">1/2 cup<br><span style="font-size:10px;color:var(--dim)">per meal × 2</span></div>
     </div>
 
     <div class="food-row">
