@@ -185,6 +185,18 @@
   .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; margin-top: 10px; font-size: 12px; color: var(--muted); }
   .history-notes { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--dim); }
 
+  /* Nutrition table */
+  .nutr-table { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 12px; }
+  .nutr-header { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); padding: 7px 12px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; }
+  .nutr-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; border-bottom: 1px solid var(--border); gap: 10px; }
+  .nutr-row:last-child { border-bottom: none; }
+  .nutr-highlight { background: rgba(147,197,253,0.05); }
+  .nutr-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .nutr-highlight .nutr-label { color: var(--blue); font-weight: 600; }
+  .nutr-input-wrap { display: flex; align-items: center; gap: 6px; }
+  .nutr-input-wrap input { width: 80px; text-align: right; padding: 4px 8px; font-size: 13px; font-family: 'DM Mono', monospace; }
+  .nutr-unit { font-size: 11px; color: var(--dim); white-space: nowrap; font-family: 'DM Mono', monospace; min-width: 70px; }
+
   /* Empty state */
   .empty { text-align: center; padding: 60px 20px; color: var(--dim); font-size: 15px; }
 
@@ -520,67 +532,97 @@
 <!-- VET INFO PANE -->
 <div class="content" id="pane-vetinfo" style="display:none;">
 
-  <!-- Food & Diet -->
+  <!-- Dry Food -->
   <div class="card">
-    <div class="card-title" style="color:var(--green)">🍗 Food & Diet</div>
+    <div class="card-title" style="color:var(--green)">🥣 Dry Kibble</div>
     <div class="field">
-      <label class="label">Food Brand / Name</label>
-      <input type="text" id="vi-food_name" placeholder="e.g. Hill's Science Diet Adult Small Paws">
-    </div>
-    <div class="grid2">
-      <div class="field">
-        <label class="label">Food Type</label>
-        <select id="vi-food_type">
-          <option value="">Select...</option>
-          <option>Dry kibble</option>
-          <option>Wet food</option>
-          <option>Dry + wet topper</option>
-          <option>Raw</option>
-          <option>Home cooked</option>
-        </select>
-      </div>
-      <div class="field">
-        <label class="label">Daily Amount (cups)</label>
-        <input type="number" id="vi-daily_amount" placeholder="e.g. 0.75" step="0.05">
-      </div>
+      <label class="label">Brand / Name</label>
+      <input type="text" id="vi-dry_name" placeholder="e.g. Kirkland Signature Adult Dog">
     </div>
     <div class="field">
-      <label class="label">Wet Topper Brand (if used)</label>
-      <input type="text" id="vi-topper_name" placeholder="e.g. Weruva Paw Lickin' Chicken">
+      <label class="label">Daily Amount</label>
+      <input type="text" id="vi-dry_amount" placeholder="e.g. 1 cup/day">
+    </div>
+    <div class="nutr-table">
+      <div class="nutr-header">Guaranteed Analysis</div>
+      <div class="nutr-row">
+        <span class="nutr-label">Calories</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-dry_calories" placeholder="—"><span class="nutr-unit">kcal/cup</span></div>
+      </div>
+      <div class="nutr-row">
+        <span class="nutr-label">Crude Protein</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-dry_protein" step="0.1" placeholder="—"><span class="nutr-unit">% min</span></div>
+      </div>
+      <div class="nutr-row">
+        <span class="nutr-label">Crude Fat</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-dry_fat" step="0.1" placeholder="—"><span class="nutr-unit">% min</span></div>
+      </div>
+      <div class="nutr-row">
+        <span class="nutr-label">Crude Fiber</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-dry_fiber" step="0.1" placeholder="—"><span class="nutr-unit">% max</span></div>
+      </div>
+      <div class="nutr-row">
+        <span class="nutr-label">Moisture</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-dry_moisture" step="0.1" placeholder="—"><span class="nutr-unit">% max</span></div>
+      </div>
+      <div class="nutr-row nutr-highlight">
+        <span class="nutr-label">Sodium ❤</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-dry_sodium" step="1" placeholder="—"><span class="nutr-unit">mg/100kcal</span></div>
+      </div>
+      <div class="nutr-row nutr-highlight">
+        <span class="nutr-label">Phosphorus ❤</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-dry_phosphorus" step="0.01" placeholder="—"><span class="nutr-unit">% DM</span></div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.6;">
+      ❤ Cardiac targets: sodium &lt;100 mg/100kcal · phosphorus &lt;0.8% dry matter
     </div>
   </div>
 
-  <!-- Nutritional Values -->
+  <!-- Wet Topper -->
   <div class="card">
-    <div class="card-title" style="color:var(--blue)">📊 Nutritional Values (per label)</div>
-    <div class="grid2">
-      <div class="field">
-        <label class="label">Calories (kcal/cup)</label>
-        <input type="number" id="vi-calories" placeholder="e.g. 363">
+    <div class="card-title" style="color:var(--blue)">🥫 Wet Food Topper</div>
+    <div class="field">
+      <label class="label">Brand / Name</label>
+      <input type="text" id="vi-wet_name" placeholder="e.g. Kirkland Signature Chicken & Rice">
+    </div>
+    <div class="field">
+      <label class="label">Daily Amount</label>
+      <input type="text" id="vi-wet_amount" placeholder="e.g. 2 large spoons/day">
+    </div>
+    <div class="nutr-table">
+      <div class="nutr-header">Guaranteed Analysis</div>
+      <div class="nutr-row">
+        <span class="nutr-label">Calories</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-wet_calories" placeholder="—"><span class="nutr-unit">kcal/can</span></div>
       </div>
-      <div class="field">
-        <label class="label">Protein (%)</label>
-        <input type="number" id="vi-protein" placeholder="e.g. 24.5" step="0.1">
+      <div class="nutr-row">
+        <span class="nutr-label">Crude Protein</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-wet_protein" step="0.1" placeholder="—"><span class="nutr-unit">% min</span></div>
       </div>
-      <div class="field">
-        <label class="label">Fat (%)</label>
-        <input type="number" id="vi-fat" placeholder="e.g. 14.5" step="0.1">
+      <div class="nutr-row">
+        <span class="nutr-label">Crude Fat</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-wet_fat" step="0.1" placeholder="—"><span class="nutr-unit">% min</span></div>
       </div>
-      <div class="field">
-        <label class="label">Fiber (%)</label>
-        <input type="number" id="vi-fiber" placeholder="e.g. 4.0" step="0.1">
+      <div class="nutr-row">
+        <span class="nutr-label">Crude Fiber</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-wet_fiber" step="0.1" placeholder="—"><span class="nutr-unit">% max</span></div>
       </div>
-      <div class="field">
-        <label class="label">Sodium (mg/100kcal)</label>
-        <input type="number" id="vi-sodium" placeholder="e.g. 95" step="1">
+      <div class="nutr-row">
+        <span class="nutr-label">Moisture</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-wet_moisture" step="0.1" placeholder="—"><span class="nutr-unit">% max</span></div>
       </div>
-      <div class="field">
-        <label class="label">Phosphorus (%)</label>
-        <input type="number" id="vi-phosphorus" placeholder="e.g. 0.6" step="0.01">
+      <div class="nutr-row nutr-highlight">
+        <span class="nutr-label">Sodium ❤</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-wet_sodium" step="1" placeholder="—"><span class="nutr-unit">mg/100kcal</span></div>
+      </div>
+      <div class="nutr-row nutr-highlight">
+        <span class="nutr-label">Phosphorus ❤</span>
+        <div class="nutr-input-wrap"><input type="number" id="vi-wet_phosphorus" step="0.01" placeholder="—"><span class="nutr-unit">% DM</span></div>
       </div>
     </div>
-    <div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.6;">
-      For cardiac patients, target sodium &lt;100 mg/100kcal and phosphorus &lt;0.8% (dry matter).
+    <div style="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.6;">
+      ❤ Cardiac targets: sodium &lt;100 mg/100kcal · phosphorus &lt;0.8% dry matter
     </div>
   </div>
 
@@ -1044,7 +1086,7 @@ function copyShareLink() {
 
 // ── Vet Info ──────────────────────────────────────────────────────────────────
 
-const VI_FIELDS = ['food_name','food_type','daily_amount','topper_name','calories','protein','fat','fiber','sodium','phosphorus','fish_oil_dose','supplements','dose_pimo','dose_enalapril','dose_furo','dose_other','vet_name','vet_phone','next_appt','vet_notes'];
+const VI_FIELDS = ['dry_name','dry_amount','dry_calories','dry_protein','dry_fat','dry_fiber','dry_moisture','dry_sodium','dry_phosphorus','wet_name','wet_amount','wet_calories','wet_protein','wet_fat','wet_fiber','wet_moisture','wet_sodium','wet_phosphorus','fish_oil_dose','supplements','dose_pimo','dose_enalapril','dose_furo','dose_other','vet_name','vet_phone','next_appt','vet_notes'];
 
 function populateVetInfoForm() {
   VI_FIELDS.forEach(id => {
@@ -1082,9 +1124,44 @@ async function saveVetInfo() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
+const DEFAULT_VET_INFO = {
+  // Dry kibble
+  dry_name:       'Kirkland Signature Adult Dog (Chicken, Rice & Vegetable)',
+  dry_amount:     '1 cup/day',
+  dry_calories:   '362',
+  dry_protein:    '26',
+  dry_fat:        '12',
+  dry_fiber:      '4',
+  dry_moisture:   '10',
+  dry_sodium:     '',
+  dry_phosphorus: '',
+  // Wet topper
+  wet_name:       'Kirkland Signature Chicken & Rice Formula (wet)',
+  wet_amount:     '2 large spoons/day',
+  wet_calories:   '408',
+  wet_protein:    '9',
+  wet_fat:        '6',
+  wet_fiber:      '1',
+  wet_moisture:   '78',
+  wet_sodium:     '',
+  wet_phosphorus: '',
+  // Rest
+  fish_oil_dose:  '',
+  supplements:    '',
+  dose_pimo:      '',
+  dose_enalapril: '',
+  dose_furo:      '',
+  dose_other:     '',
+  vet_name:       '',
+  vet_phone:      '',
+  next_appt:      '',
+  vet_notes:      '',
+};
+
 (async () => {
   document.getElementById('f-date').value = today();
   await loadLog();
+  if (!Object.keys(vetInfo).length) vetInfo = { ...DEFAULT_VET_INFO };
   const todayEntry = log.find(e => e.date === today());
   if (todayEntry) setFormData(todayEntry);
 })();
