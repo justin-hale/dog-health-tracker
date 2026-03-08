@@ -183,7 +183,7 @@
   .badge-rr-warn { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
   .badge-weight { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(147,197,253,0.25); }
   .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; margin-top: 10px; font-size: 12px; color: var(--muted); }
-  .history-notes { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--dim); }
+  .history-notes { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text); }
 
   /* Nutrition table */
   .nutr-table { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 12px; }
@@ -1433,8 +1433,10 @@ function renderHistory() {
     const rows = [
       e.appetite        ? ['😋 Appetite', e.appetite.split('—')[0].trim()]       : null,
       e.energy          ? ['⚡ Energy',   e.energy.split('—')[0].trim()]          : null,
-      e.urination_count ? ['💧 Urination', e.urination_count + 'x']              : null,
-      e.gum_color       ? ['🦷 Gums',     e.gum_color]                           : null,
+      e.urination_count   ? ['💧 Urination', e.urination_count + 'x']              : null,
+      e.urination_quality ? ['🚿 Stream',   e.urination_quality]                  : null,
+      e.straining         ? ['⚠ Straining', e.straining]                          : null,
+      e.gum_color         ? ['🦷 Gums',     e.gum_color]                          : null,
       e.stool_quality   ? ['🌿 Stool',    e.stool_quality]                       : null,
       ['💊 Meds', `${medCount}/5 given`],
     ].filter(Boolean);
@@ -1444,8 +1446,8 @@ function renderHistory() {
           <div class="history-date">${dateStr}</div>
         </div>
         <div class="history-badges">${rrBadge}${wtBadge}</div>
-        <div class="history-grid">${rows.map(([k,v]) => `<div><span style="color:var(--dim)">${k}</span> ${v}</div>`).join('')}</div>
-        ${e.notes ? `<div class="history-notes">📝 ${e.notes}</div>` : ''}
+        <div class="history-grid">${rows.map(([k,v]) => `<div><span style="color:var(--text)">${k}:</span> ${v}</div>`).join('')}</div>
+        ${e.notes ? `<div class="history-notes">${e.notes}</div>` : ''}
       </div>`;
   }).join('');
 }
