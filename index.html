@@ -197,6 +197,20 @@
   .nutr-unit { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; }
   .nutr-missing { color: var(--dim); font-style: italic; font-size: 12px; }
 
+  /* Medication table */
+  .med-header-row { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); }
+  .med-header-row span { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--dim); font-family: 'DM Mono', monospace; }
+  .med-row { display: flex; align-items: center; gap: 8px; padding: 4px 12px; border-bottom: 1px solid var(--border); }
+  .med-row:last-child { border-bottom: none; }
+  .med-row input { background: transparent; border: none; border-bottom: 1px solid transparent; border-radius: 0; color: var(--text); padding: 5px 2px; font-size: 13px; font-family: inherit; outline: none; width: 100%; }
+  .med-row input:focus { border-bottom-color: rgba(147,197,253,0.4); }
+  .med-col-name { flex: 2; min-width: 0; }
+  .med-col-dose { flex: 1; min-width: 0; }
+  .med-col-freq { flex: 1.5; min-width: 0; }
+  .med-col-del { flex-shrink: 0; width: 24px; }
+  .med-del { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; padding: 2px 4px; line-height: 1; }
+  .med-del:hover { color: var(--red); }
+
   /* Empty state */
   .empty { text-align: center; padding: 60px 20px; color: var(--dim); font-size: 15px; }
 
@@ -441,6 +455,7 @@
   <button class="tab active" id="tab-today" onclick="switchTab('today')">Today's Log</button>
   <button class="tab inactive" id="tab-history" onclick="switchTab('history')">History (<span id="hist-count">0</span>)</button>
   <button class="tab inactive" id="tab-vetinfo" onclick="switchTab('vetinfo')">Vet Info</button>
+  <button class="tab inactive" id="tab-vetnotes" onclick="switchTab('vetnotes')">Vet Notes</button>
   <button class="tab inactive" id="tab-careguide" onclick="switchTab('careguide')">Care Guide</button>
 </div>
 
@@ -456,11 +471,11 @@
   <div class="card">
     <div class="card-title" style="color:var(--purple)">💊 Medications Given</div>
     <div class="checks">
-      <label class="check-label" id="lbl-pimo_am"><input type="checkbox" id="f-pimo_am" onchange="updateCheck('pimo_am')"><span class="check-dot">○</span> Pimobendan AM</label>
-      <label class="check-label" id="lbl-pimo_pm"><input type="checkbox" id="f-pimo_pm" onchange="updateCheck('pimo_pm')"><span class="check-dot">○</span> Pimobendan PM</label>
+      <label class="check-label" id="lbl-pimo_am"><input type="checkbox" id="f-pimo_am" onchange="updateCheck('pimo_am')"><span class="check-dot">○</span> Pimo AM</label>
+      <label class="check-label" id="lbl-pimo_pm"><input type="checkbox" id="f-pimo_pm" onchange="updateCheck('pimo_pm')"><span class="check-dot">○</span> Pimo PM</label>
       <label class="check-label" id="lbl-enalapril"><input type="checkbox" id="f-enalapril" onchange="updateCheck('enalapril')"><span class="check-dot">○</span> Enalapril</label>
-      <label class="check-label" id="lbl-furo_am"><input type="checkbox" id="f-furo_am" onchange="updateCheck('furo_am')"><span class="check-dot">○</span> Furosemide AM</label>
-      <label class="check-label" id="lbl-furo_pm"><input type="checkbox" id="f-furo_pm" onchange="updateCheck('furo_pm')"><span class="check-dot">○</span> Furosemide PM</label>
+      <label class="check-label" id="lbl-furo_am"><input type="checkbox" id="f-furo_am" onchange="updateCheck('furo_am')"><span class="check-dot">○</span> Furos AM</label>
+      <label class="check-label" id="lbl-furo_pm"><input type="checkbox" id="f-furo_pm" onchange="updateCheck('furo_pm')"><span class="check-dot">○</span> Furos PM</label>
     </div>
   </div>
 
@@ -664,6 +679,21 @@
 <!-- VET INFO PANE -->
 <div class="content" id="pane-vetinfo" style="display:none;">
 
+  <!-- Medications -->
+  <div class="card">
+    <div class="card-title" style="color:var(--purple)">💉 Current Medications</div>
+    <div class="nutr-table">
+      <div class="med-header-row">
+        <span class="med-col-name">Medication</span>
+        <span class="med-col-dose">Dose</span>
+        <span class="med-col-freq">Frequency</span>
+        <span class="med-col-del"></span>
+      </div>
+      <div id="meds-table-body"></div>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:10px;" onclick="addMedRow()">+ Add Medication</button>
+  </div>
+
   <!-- Dry Kibble -->
   <div class="card">
     <div class="card-title" style="color:var(--green)">🥣 Dry Kibble</div>
@@ -776,53 +806,26 @@
     </div>
   </div>
 
-  <!-- Medications Reference -->
-  <div class="card">
-    <div class="card-title" style="color:var(--purple)">💉 Medication Doses (reference)</div>
-    <div class="grid2">
-      <div class="field">
-        <label class="label">Pimobendan</label>
-        <input type="text" id="vi-dose_pimo" placeholder="e.g. 1.25mg twice daily">
-      </div>
-      <div class="field">
-        <label class="label">Enalapril</label>
-        <input type="text" id="vi-dose_enalapril" placeholder="e.g. 2.5mg once daily">
-      </div>
-      <div class="field">
-        <label class="label">Furosemide</label>
-        <input type="text" id="vi-dose_furo" placeholder="e.g. 12.5mg twice daily">
-      </div>
-      <div class="field">
-        <label class="label">Other Medications</label>
-        <input type="text" id="vi-dose_other" placeholder="Name, dose, frequency">
-      </div>
-    </div>
-  </div>
-
-  <!-- Vet Contact -->
-  <div class="card">
-    <div class="card-title" style="color:var(--orange)">🏥 Vet Contact</div>
-    <div class="grid2">
-      <div class="field">
-        <label class="label">Vet / Clinic Name</label>
-        <input type="text" id="vi-vet_name" placeholder="e.g. Soehnlen Veterinary Clinic">
-      </div>
-      <div class="field">
-        <label class="label">Phone</label>
-        <input type="text" id="vi-vet_phone" placeholder="e.g. (555) 123-4567">
-      </div>
-    </div>
-    <div class="field">
-      <label class="label">Next Appointment</label>
-      <input type="date" id="vi-next_appt">
-    </div>
-    <div class="field">
-      <label class="label">Notes / Questions for Vet</label>
-      <textarea id="vi-vet_notes" placeholder="Ongoing concerns, questions to raise at next visit..."></textarea>
-    </div>
-  </div>
-
   <button class="save-btn" id="vi-save-btn" onclick="saveVetInfo()">Save Vet Info</button>
+</div>
+
+<!-- VET NOTES PANE -->
+<div class="content" id="pane-vetnotes" style="display:none;">
+
+  <div class="card">
+    <div class="card-title" style="color:var(--orange)">📋 New Vet Visit Note</div>
+    <div class="field">
+      <label class="label">Visit Date</label>
+      <input type="date" id="vn-date">
+    </div>
+    <div class="field">
+      <label class="label">Notes</label>
+      <textarea id="vn-text" style="min-height:120px;" placeholder="What did the vet say? Any changes to medication, diagnosis updates, next steps..."></textarea>
+    </div>
+    <button class="save-btn" id="vn-save-btn" onclick="saveVetNote()">Save Note</button>
+  </div>
+
+  <div id="vetnotes-list"></div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════
@@ -1408,12 +1411,13 @@ async function saveEntry() {
 }
 
 function switchTab(tab) {
-  ['today','history','vetinfo','careguide'].forEach(t => {
+  ['today','history','vetinfo','vetnotes','careguide'].forEach(t => {
     document.getElementById('pane-'+t).style.display = tab === t ? 'block' : 'none';
     document.getElementById('tab-'+t).className = 'tab ' + (tab === t ? 'active' : 'inactive');
   });
-  if (tab === 'history') renderHistory();
-  if (tab === 'vetinfo') populateVetInfoForm();
+  if (tab === 'history')  renderHistory();
+  if (tab === 'vetinfo')  populateVetInfoForm();
+  if (tab === 'vetnotes') { renderVetNotes(); document.getElementById('vn-date').value = today(); }
 }
 
 function renderHistory() {
@@ -1545,22 +1549,110 @@ function copyShareLink() {
   });
 }
 
-const VI_FIELDS = ['dose_pimo','dose_enalapril','dose_furo','dose_other','vet_name','vet_phone','next_appt','vet_notes'];
+const VI_FIELDS = [];
+const DEFAULT_MEDS = [
+  { name: 'Pimobendan',  dose: '',  freq: 'twice daily' },
+  { name: 'Enalapril',   dose: '',  freq: 'once daily'  },
+  { name: 'Furosemide',  dose: '',  freq: 'twice daily' },
+];
+
+function renderMedsTable(meds) {
+  const body = document.getElementById('meds-table-body');
+  if (!body) return;
+  body.innerHTML = (meds || []).map((m, i) => `
+    <div class="med-row" data-idx="${i}">
+      <div class="med-col-name"><input type="text" class="med-name" value="${escHtml(m.name)}" placeholder="Medication name"></div>
+      <div class="med-col-dose"><input type="text" class="med-dose" value="${escHtml(m.dose)}" placeholder="e.g. 1.25mg"></div>
+      <div class="med-col-freq"><input type="text" class="med-freq" value="${escHtml(m.freq)}" placeholder="e.g. twice daily"></div>
+      <div class="med-col-del"><button class="med-del" onclick="delMedRow(this)" title="Remove">✕</button></div>
+    </div>`).join('');
+}
+
+function addMedRow() {
+  const body = document.getElementById('meds-table-body');
+  const div = document.createElement('div');
+  div.className = 'med-row';
+  div.innerHTML = `
+    <div class="med-col-name"><input type="text" class="med-name" placeholder="Medication name"></div>
+    <div class="med-col-dose"><input type="text" class="med-dose" placeholder="e.g. 1.25mg"></div>
+    <div class="med-col-freq"><input type="text" class="med-freq" placeholder="e.g. twice daily"></div>
+    <div class="med-col-del"><button class="med-del" onclick="delMedRow(this)" title="Remove">✕</button></div>`;
+  body.appendChild(div);
+  div.querySelector('.med-name').focus();
+}
+
+function delMedRow(btn) {
+  btn.closest('.med-row').remove();
+}
+
+function collectMeds() {
+  return Array.from(document.querySelectorAll('#meds-table-body .med-row')).map(row => ({
+    name: row.querySelector('.med-name').value.trim(),
+    dose: row.querySelector('.med-dose').value.trim(),
+    freq: row.querySelector('.med-freq').value.trim(),
+  })).filter(m => m.name);
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 function populateVetInfoForm() {
-  VI_FIELDS.forEach(id => {
-    const el = document.getElementById('vi-'+id);
-    if (el) el.value = vetInfo[id] || '';
-  });
+  renderMedsTable(vetInfo.medications && vetInfo.medications.length ? vetInfo.medications : DEFAULT_MEDS);
 }
 
 function collectVetInfoForm() {
-  const data = {};
-  VI_FIELDS.forEach(id => {
-    const el = document.getElementById('vi-'+id);
-    if (el) data[id] = el.value;
-  });
-  return data;
+  return {
+    medications: collectMeds(),
+    vetNotes: vetInfo.vetNotes || [],
+  };
+}
+
+// ── Vet Notes ─────────────────────────────────────────────────────────────────
+
+function renderVetNotes() {
+  const el = document.getElementById('vetnotes-list');
+  if (!el) return;
+  const notes = (vetInfo.vetNotes || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+  if (!notes.length) {
+    el.innerHTML = '<div class="empty">No vet visit notes yet.</div>';
+    return;
+  }
+  el.innerHTML = notes.map(n => {
+    const d = new Date(n.date + 'T12:00:00');
+    const dateStr = `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    return `
+      <div class="history-card">
+        <div class="history-date">${dateStr}</div>
+        <div style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.7;white-space:pre-wrap;">${escHtml(n.text)}</div>
+      </div>`;
+  }).join('');
+}
+
+async function saveVetNote() {
+  const date = document.getElementById('vn-date').value;
+  const text = document.getElementById('vn-text').value.trim();
+  if (!date) { alert('Please set a visit date.'); return; }
+  if (!text)  { alert('Please enter a note.'); return; }
+
+  if (!vetInfo.vetNotes) vetInfo.vetNotes = [];
+  vetInfo.vetNotes = vetInfo.vetNotes.filter(n => n.date !== date);
+  vetInfo.vetNotes.push({ date, text });
+
+  const btn = document.getElementById('vn-save-btn');
+  btn.textContent = '⟳ Saving…';
+  btn.classList.add('saving');
+  btn.disabled = true;
+
+  await saveLog();
+
+  document.getElementById('vn-text').value = '';
+  renderVetNotes();
+  btn.textContent = '✓ Saved!';
+  btn.classList.remove('saving');
+  btn.classList.add('saved');
+  btn.disabled = false;
+  setTimeout(() => { btn.textContent = 'Save Note'; btn.classList.remove('saved'); }, 2500);
 }
 
 async function saveVetInfo() {
@@ -1582,8 +1674,8 @@ async function saveVetInfo() {
 }
 
 const DEFAULT_VET_INFO = {
-  dose_pimo: '', dose_enalapril: '', dose_furo: '', dose_other: '',
-  vet_name: '', vet_phone: '', next_appt: '', vet_notes: '',
+  medications: DEFAULT_MEDS,
+  vetNotes: [],
 };
 
 (async () => {
