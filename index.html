@@ -517,9 +517,11 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'gizmo-health-log-v1';
-const CONFIG_KEY  = 'gizmo-config-v1';
-const GIST_FILE   = 'gizmo-log.json';
+const STORAGE_KEY    = 'gizmo-health-log-v1';
+const CONFIG_KEY     = 'gizmo-config-v1';
+const GIST_FILE      = 'gizmo-log.json';
+// ← Paste your Gist ID here once, push, and the page always loads this data
+const DEFAULT_GIST_ID = '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';
 
 let log = [];
 let cfg = { gistId: '', token: '' };
@@ -539,9 +541,10 @@ function loadConfig() {
     const s = localStorage.getItem(CONFIG_KEY);
     if (s) cfg = { ...cfg, ...JSON.parse(s) };
   } catch(e) {}
-  // URL ?gist= param overrides stored ID (for share links)
+  // Priority: URL param → localStorage → hardcoded default
   const urlGist = new URLSearchParams(window.location.search).get('gist');
   if (urlGist) cfg.gistId = urlGist;
+  else if (!cfg.gistId && DEFAULT_GIST_ID) cfg.gistId = DEFAULT_GIST_ID;
 }
 
 function persistConfig() {
