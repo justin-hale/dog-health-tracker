@@ -231,9 +231,140 @@
   }
   .modal-msg { font-size: 12px; margin-top: 8px; min-height: 18px; font-family: 'DM Mono', monospace; }
 
+  /* ── Care Guide styles ──────────────────────────────── */
+
+  /* Print button */
+  .print-btn {
+    background: var(--purple); color: #1a1035; border-radius: 9px;
+    padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+    font-family: inherit; white-space: nowrap; border: none;
+  }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 10px; top: 6px; bottom: 6px;
+    width: 2px; background: var(--border); border-radius: 2px;
+  }
+  .timeline-item { position: relative; margin-bottom: 20px; }
+  .timeline-item:last-child { margin-bottom: 0; }
+  .timeline-dot {
+    position: absolute; left: -22px; top: 3px;
+    width: 16px; height: 16px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; border: 2px solid var(--bg);
+    flex-shrink: 0;
+  }
+  .dot-purple { background: var(--purple); }
+  .dot-green  { background: var(--green); }
+  .dot-blue   { background: var(--blue); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-orange { background: var(--orange); }
+  .dot-pink   { background: var(--pink); }
+
+  .tl-time {
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700;
+    color: var(--muted); letter-spacing: 0.06em; margin-bottom: 4px;
+  }
+  .tl-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .tl-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .tl-body strong { color: var(--text); font-weight: 600; }
+
+  /* Steps */
+  .step-list { list-style: none; }
+  .step-list li {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    line-height: 1.55; color: var(--muted);
+  }
+  .step-list li:last-child { border-bottom: none; }
+  .step-num {
+    flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border2);
+    font-size: 10px; font-weight: 800; color: var(--dim);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace; margin-top: 1px;
+  }
+  .step-list li strong { color: var(--text); font-weight: 600; }
+
+  /* Pill tracker */
+  .pill-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+  }
+  .pill-row:last-child { border-bottom: none; }
+  .pill-icon {
+    font-size: 18px; flex-shrink: 0; width: 32px; text-align: center; margin-top: 1px;
+  }
+  .pill-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .pill-detail { font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .pill-detail strong { color: var(--text); font-weight: 600; }
+  .pill-timing {
+    margin-left: auto; flex-shrink: 0; text-align: right;
+  }
+  .pill-time-badge {
+    display: inline-block; font-family: 'DM Mono', monospace; font-size: 11px;
+    font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-bottom: 3px;
+  }
+  .time-am { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(253,230,138,0.25); }
+  .time-pm { background: var(--purple); color: #1a1035; }
+  .time-daily { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(147,197,253,0.25); }
+
+  /* Warning box */
+  .warn-box {
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .warn-box-danger { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.3); }
+  .warn-box-warn   { background: var(--yellow-bg); border: 1px solid rgba(251,191,36,0.25); }
+  .warn-box-ok     { background: var(--green-bg); border: 1px solid rgba(134,239,172,0.25); }
+  .warn-icon { font-size: 20px; flex-shrink: 0; }
+  .warn-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .warn-box-danger .warn-title { color: var(--red); }
+  .warn-box-warn   .warn-title { color: var(--yellow); }
+  .warn-box-ok     .warn-title { color: var(--green); }
+  .warn-body { font-size: 12px; line-height: 1.6; color: var(--muted); }
+  .warn-body strong { font-weight: 600; color: var(--text); }
+
+  /* Food visual */
+  .food-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .food-row:last-child { border-bottom: none; }
+  .food-icon { font-size: 20px; flex-shrink: 0; width: 30px; text-align: center; }
+  .food-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .food-detail { font-size: 12px; color: var(--muted); }
+  .food-amount {
+    margin-left: auto; flex-shrink: 0;
+    font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700;
+    color: var(--blue); background: var(--blue-bg); padding: 4px 9px;
+    border-radius: 7px; border: 1px solid rgba(147,197,253,0.2); text-align: right;
+  }
+
+  /* Contact card */
+  .contact-row {
+    display: flex; align-items: center; gap: 12px; padding: 9px 0;
+    border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .contact-row:last-child { border-bottom: none; }
+  .contact-icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
+  .contact-label { color: var(--dim); font-size: 11px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.07em; }
+  .contact-val { font-weight: 600; color: var(--text); }
+
+  @media print {
+    .header, .tabs, #tab-careguide ~ *, .print-btn, .icon-btn, .export-btn { display: none !important; }
+    #pane-careguide { display: block !important; }
+    body { background: white; color: black; }
+    .card { border: 1px solid #ccc; background: white; break-inside: avoid; }
+    .warn-box-danger { background: #fef2f2; border-color: #fca5a5; }
+    .warn-title { color: #dc2626 !important; }
+  }
+
   @media (max-width: 400px) {
     .grid3 { grid-template-columns: 1fr 1fr; }
     .header-title { font-size: 16px; }
+    .pill-timing { display: none; }
   }
 </style>
 </head>
@@ -310,6 +441,7 @@
   <button class="tab active" id="tab-today" onclick="switchTab('today')">Today's Log</button>
   <button class="tab inactive" id="tab-history" onclick="switchTab('history')">History (<span id="hist-count">0</span>)</button>
   <button class="tab inactive" id="tab-vetinfo" onclick="switchTab('vetinfo')">Vet Info</button>
+  <button class="tab inactive" id="tab-careguide" onclick="switchTab('careguide')">🏠 Care Guide</button>
 </div>
 
 <!-- TODAY FORM -->
@@ -541,11 +673,11 @@
       <div class="nutr-header">Calorie Content</div>
       <div class="nutr-row">
         <span class="nutr-label">Energy</span>
-        <span class="nutr-val">362 <span class="nutr-unit">kcal / cup</span></span>
+        <span class="nutr-val">393 <span class="nutr-unit">kcal / cup</span></span>
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Energy density</span>
-        <span class="nutr-val">3,614 <span class="nutr-unit">kcal / kg</span></span>
+        <span class="nutr-val">3,754 <span class="nutr-unit">kcal / kg</span></span>
       </div>
     </div>
     <div class="nutr-table" style="margin-top:10px;">
@@ -556,7 +688,7 @@
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Crude Fat</span>
-        <span class="nutr-val">12 <span class="nutr-unit">% min</span></span>
+        <span class="nutr-val">16 <span class="nutr-unit">% min</span></span>
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Crude Fiber</span>
@@ -568,19 +700,19 @@
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Omega-6 Fatty Acids</span>
-        <span class="nutr-val">2.05 <span class="nutr-unit">% min</span></span>
+        <span class="nutr-val">2.5 <span class="nutr-unit">% min</span></span>
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Omega-3 Fatty Acids</span>
-        <span class="nutr-val">0.33 <span class="nutr-unit">% min</span></span>
+        <span class="nutr-val">0.4 <span class="nutr-unit">% min</span></span>
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Glucosamine</span>
-        <span class="nutr-val">400 <span class="nutr-unit">mg/kg min</span></span>
+        <span class="nutr-val">300 <span class="nutr-unit">mg/kg min</span></span>
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Chondroitin Sulfate</span>
-        <span class="nutr-val">50 <span class="nutr-unit">mg/kg min</span></span>
+        <span class="nutr-val">100 <span class="nutr-unit">mg/kg min</span></span>
       </div>
       <div class="nutr-row nutr-highlight">
         <span class="nutr-label">Sodium ❤</span>
@@ -600,12 +732,12 @@
   <div class="card">
     <div class="card-title" style="color:var(--blue)">🥫 Wet Food Topper</div>
     <div style="font-size:14px;font-weight:600;margin-bottom:2px;">Kirkland Signature</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Chicken &amp; Rice Formula · 2 large spoons/day</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Chicken &amp; Rice Formula (pink can) · optional daily topper</div>
     <div class="nutr-table">
       <div class="nutr-header">Calorie Content (Calculated ME)</div>
       <div class="nutr-row">
         <span class="nutr-label">Energy per can</span>
-        <span class="nutr-val">408 <span class="nutr-unit">kcal / can</span></span>
+        <span class="nutr-val">426 <span class="nutr-unit">kcal / can</span></span>
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Energy density</span>
@@ -624,7 +756,7 @@
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Crude Fiber</span>
-        <span class="nutr-val">1 <span class="nutr-unit">% max</span></span>
+        <span class="nutr-val">1.5 <span class="nutr-unit">% max</span></span>
       </div>
       <div class="nutr-row">
         <span class="nutr-label">Moisture</span>
@@ -673,7 +805,7 @@
     <div class="grid2">
       <div class="field">
         <label class="label">Vet / Clinic Name</label>
-        <input type="text" id="vi-vet_name" placeholder="e.g. Banfield Pet Hospital">
+        <input type="text" id="vi-vet_name" placeholder="e.g. Soehnlen Veterinary Clinic">
       </div>
       <div class="field">
         <label class="label">Phone</label>
@@ -693,13 +825,359 @@
   <button class="save-btn" id="vi-save-btn" onclick="saveVetInfo()">Save Vet Info</button>
 </div>
 
+<!-- ══════════════════════════════════════════════════════
+     CARE GUIDE PANE
+     ══════════════════════════════════════════════════════ -->
+<div class="content" id="pane-careguide" style="display:none;">
+
+  <!-- Hero intro -->
+  <div class="card" style="border-color:rgba(147,197,253,0.25);background:rgba(147,197,253,0.06);">
+    <div style="display:flex;align-items:flex-start;gap:14px;">
+      <div style="font-size:36px;line-height:1;">🐾</div>
+      <div>
+        <div style="font-size:16px;font-weight:800;margin-bottom:4px;">Gizmo's Care Guide</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">
+          Gizmo is a <strong style="color:var(--text)">12-year-old Chihuahua/terrier mix</strong> with
+          <strong style="color:var(--text)">Congestive Heart Failure (Stage C)</strong>. He is on three
+          daily medications and requires careful monitoring. His condition is <em>managed</em> — with
+          the right routine he has great quality days. This guide walks you through exactly what to do.
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="print-btn" onclick="window.print()">🖨 Print this guide</button>
+          <span style="font-size:11px;color:var(--dim);align-self:center;font-family:'DM Mono',monospace;">or screenshot for offline use</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Emergency contacts — always first -->
+  <div class="card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.07);">
+    <div class="card-title" style="color:var(--red)">🚨 Emergency Contacts</div>
+    <div class="contact-row">
+      <span class="contact-icon">👤</span>
+      <div>
+        <div class="contact-label">Owner</div>
+        <div class="contact-val">Justin Hale</div>
+      </div>
+      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);">615-681-1614</div>
+    </div>
+    <div class="contact-row">
+      <span class="contact-icon">🏥</span>
+      <div>
+        <div class="contact-label">Primary Vet — Stark Animal Hospital</div>
+        <div class="contact-val">Call first for non-urgent concerns</div>
+      </div>
+    </div>
+    <div class="contact-row">
+      <span class="contact-icon">🚑</span>
+      <div>
+        <div class="contact-label">24hr Emergency — Stark County Veterinary Emergency</div>
+        <div class="contact-val">4303 Whipple Ave NW, Canton, OH</div>
+      </div>
+      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--red);">330-452-5116</div>
+    </div>
+    <div class="contact-row">
+      <span class="contact-icon">❤️</span>
+      <div>
+        <div class="contact-label">Cardiologist — Metropolitan Veterinary Hospital</div>
+        <div class="contact-val">Referred for echocardiogram</div>
+      </div>
+      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);">330-666-2976</div>
+    </div>
+  </div>
+
+  <!-- Emergency signs -->
+  <div class="card">
+    <div class="card-title" style="color:var(--red)">🚨 Go to the ER Immediately If You See:</div>
+    <div class="warn-box warn-box-danger" style="margin-bottom:8px;">
+      <div class="warn-icon">😮‍💨</div>
+      <div>
+        <div class="warn-title">Labored or rapid breathing at rest</div>
+        <div class="warn-body">Count breaths for 30 seconds × 2. <strong>Over 40 breaths/min = ER now.</strong> Over 30 = call vet immediately.</div>
+      </div>
+    </div>
+    <div class="warn-box warn-box-danger" style="margin-bottom:8px;">
+      <div class="warn-icon">🦷</div>
+      <div>
+        <div class="warn-title">Blue, gray, or white gums</div>
+        <div class="warn-body">Lift his lip and look at his gums. They should be <strong>pink and moist</strong>. Any other color = ER immediately.</div>
+      </div>
+    </div>
+    <div class="warn-box warn-box-danger" style="margin-bottom:8px;">
+      <div class="warn-icon">⚡</div>
+      <div>
+        <div class="warn-title">Collapse or inability to stand</div>
+        <div class="warn-body">He has had collapse episodes before. <strong>Do not wait.</strong> Go to Stark County Vet Emergency.</div>
+      </div>
+    </div>
+    <div class="warn-box warn-box-danger">
+      <div class="warn-icon">🫧</div>
+      <div>
+        <div class="warn-title">Coughing up foam or fluid</div>
+        <div class="warn-body">This indicates fluid in the lungs. <strong>ER immediately.</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily schedule timeline -->
+  <div class="card">
+    <div class="card-title" style="color:var(--blue)">🕐 Daily Schedule</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px;font-family:'DM Mono',monospace;">Pimobendan must be given 1 hour BEFORE food — timing matters for his heart.</div>
+    <div class="timeline">
+
+      <div class="timeline-item">
+        <div class="timeline-dot dot-pink"></div>
+        <div class="tl-time">ANYTIME MORNING · WHILE HE'S SLEEPING</div>
+        <div class="tl-title" style="color:var(--pink)">🫁 Check Resting Respiratory Rate (once daily)</div>
+        <div class="tl-body">
+          Catch him sleeping whenever you can and count his breaths. Count for 30 seconds, multiply by 2.
+          <strong>Under 30 = normal.</strong> If it's 30–35 call Justin. <strong>Over 40 = ER immediately.</strong>
+          See the full how-to section below.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot dot-yellow"></div>
+        <div class="tl-time">~10:00 AM · BEFORE BREAKFAST</div>
+        <div class="tl-title" style="color:var(--yellow)">💊 Morning Pimobendan (on empty stomach)</div>
+        <div class="tl-body">
+          Give <strong>Pimobendan only</strong> in a small piece of bread. This must be given <strong>1 hour before his meal</strong> on an empty stomach.
+          Use the fake-out method: plain treat → pill treat → plain treat so he doesn't spit it out.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot dot-green"></div>
+        <div class="tl-time">~11:00 AM · ONE HOUR AFTER PIMOBENDAN</div>
+        <div class="tl-title" style="color:var(--green)">🍗 Morning Meal + Remaining Meds</div>
+        <div class="tl-body">
+          Scoop <strong>½ cup of pre-soaked kibble</strong> from the jar (food was soaked overnight — see prep below).
+          Add <strong>2 spoons of Kirkland wet food (pink can)</strong> on top.
+          Give <strong>Enalapril</strong> and <strong>Furosemide</strong> hidden in food or a small treat alongside this meal.
+          <strong>Fresh water must always be available.</strong>
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot dot-yellow"></div>
+        <div class="tl-time">~10:00 PM · BEFORE DINNER</div>
+        <div class="tl-title" style="color:var(--yellow)">💊 Evening Pimobendan (on empty stomach)</div>
+        <div class="tl-body">
+          Give <strong>Pimobendan only</strong> again in a small piece of bread, <strong>1 hour before dinner.</strong>
+          Same fake-out method as morning.
+        </div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-dot dot-orange"></div>
+        <div class="tl-time">~11:00 PM · ONE HOUR AFTER PIMOBENDAN</div>
+        <div class="tl-title" style="color:var(--orange)">🍗 Evening Meal + Furosemide</div>
+        <div class="tl-body">
+          Same as morning — <strong>½ cup pre-soaked kibble</strong> with <strong>2 spoons wet food topper</strong>.
+          Give <strong>Furosemide</strong> alongside this meal. Refrigerate unused wet food.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Medications detail -->
+  <div class="card">
+    <div class="card-title" style="color:var(--purple)">💊 Medication Details</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:14px;font-family:'DM Mono',monospace;">All three meds are required every day — do not skip. Do not double up if you miss a dose.</div>
+
+    <div class="pill-row">
+      <div class="pill-icon">🫀</div>
+      <div style="flex:1;">
+        <div class="pill-name">Pimobendan</div>
+        <div class="pill-detail">
+          Strengthens heart muscle. <strong>Must be given 1 hour before food on an empty stomach.</strong>
+          Give in a small piece of plain bread only. Use the "fake-out" method: plain treat → pill treat → plain treat.
+        </div>
+      </div>
+      <div class="pill-timing">
+        <div><span class="pill-time-badge time-am">~10 AM</span></div>
+        <div><span class="pill-time-badge time-pm">~10 PM</span></div>
+      </div>
+    </div>
+
+    <div class="pill-row">
+      <div class="pill-icon">💙</div>
+      <div style="flex:1;">
+        <div class="pill-name">Enalapril</div>
+        <div class="pill-detail">
+          Reduces heart workload. <strong>Once daily with the morning meal.</strong>
+          Give alongside Furosemide at the 11 AM feeding. No special food timing needed.
+        </div>
+      </div>
+      <div class="pill-timing">
+        <div><span class="pill-time-badge time-daily">~11 AM only</span></div>
+      </div>
+    </div>
+
+    <div class="pill-row">
+      <div class="pill-icon">💧</div>
+      <div style="flex:1;">
+        <div class="pill-name">Furosemide</div>
+        <div class="pill-detail">
+          Water pill — helps remove fluid from lungs. <strong>Twice daily, given with meals.</strong>
+          He will need to urinate more than a normal dog — this is expected.
+          He may make multiple attempts before producing a full stream. <strong>Always keep fresh water available.</strong>
+        </div>
+      </div>
+      <div class="pill-timing">
+        <div><span class="pill-time-badge time-am">~11 AM</span></div>
+        <div><span class="pill-time-badge time-pm">~11 PM</span></div>
+      </div>
+    </div>
+
+    <div class="warn-box warn-box-warn" style="margin-top:14px;margin-bottom:0;">
+      <div class="warn-icon">⚠️</div>
+      <div>
+        <div class="warn-title">Missed Dose Protocol</div>
+        <div class="warn-body">If you realize you missed a dose and it's been less than a few hours, give it then. If the next dose is coming up soon, <strong>skip the missed dose</strong>. Never give two doses at once.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feeding guide -->
+  <div class="card">
+    <div class="card-title" style="color:var(--green)">🥣 Feeding Guide</div>
+
+    <div style="font-size:12px;color:var(--dim);margin-bottom:12px;line-height:1.6;">
+      Two meals per day. Food is soaked in a jar overnight — just scoop and serve.
+    </div>
+
+    <div class="food-row">
+      <div class="food-icon">🥣</div>
+      <div>
+        <div class="food-name">Kirkland Dry Kibble (pre-soaked)</div>
+        <div class="food-detail">Red bag · Chicken, Rice &amp; Vegetable · soaked overnight in plain water</div>
+      </div>
+      <div class="food-amount">½ cup<br><span style="font-size:10px;color:var(--dim)">per meal × 2</span></div>
+    </div>
+
+    <div class="food-row">
+      <div class="food-icon">🥫</div>
+      <div>
+        <div class="food-name">Kirkland Wet Food (topper)</div>
+        <div class="food-detail">Pink can · Chicken &amp; Rice · added on top of soaked kibble</div>
+      </div>
+      <div class="food-amount">2 spoons<br><span style="font-size:10px;color:var(--dim)">per meal × 2</span></div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;font-family:'DM Mono',monospace;">Prep method</div>
+      <ol class="step-list">
+        <li><div class="step-num">1</div><div>The night before: measure <strong>1 cup of dry kibble</strong> into a mason jar, add enough <strong>plain water</strong> to cover, and leave it in the fridge overnight to soak. <strong>No broth, no stock</strong> — high sodium is dangerous for his heart.</div></li>
+        <li><div class="step-num">2</div><div>At mealtime, scoop out <strong>½ cup of the soaked kibble</strong> into his bowl.</div></li>
+        <li><div class="step-num">3</div><div>Add <strong>2 spoons of Kirkland wet food (pink can)</strong> on top.</div></li>
+        <li><div class="step-num">4</div><div>Serve at room temperature. Keep the jar and any open wet food cans refrigerated.</div></li>
+      </ol>
+    </div>
+
+    <div style="margin-top:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;font-family:'DM Mono',monospace;">Safe treats</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Plain boiled chicken</span>
+        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Plain scrambled eggs</span>
+        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Baby carrots</span>
+        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Blueberries</span>
+        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Plain pumpkin</span>
+        <span style="background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✗ Deli meats</span>
+        <span style="background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✗ Anything grain-free</span>
+        <span style="background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✗ High-sodium treats</span>
+        <span style="background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✗ Xylitol — toxic</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- What's normal for Gizmo -->
+  <div class="card">
+    <div class="card-title" style="color:var(--blue)">🩺 What's Normal for Gizmo</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:14px;">Don't be alarmed by these — they're expected given his condition and medications.</div>
+
+    <div class="warn-box warn-box-ok" style="margin-bottom:8px;">
+      <div class="warn-icon">💧</div>
+      <div>
+        <div class="warn-title">Frequent or unusual urination</div>
+        <div class="warn-body">He takes a diuretic (water pill) which empties his bladder. He may try to mark several dry spots before producing a strong stream. <strong>This is normal.</strong> Always keep fresh water available.</div>
+      </div>
+    </div>
+
+    <div class="warn-box warn-box-ok" style="margin-bottom:8px;">
+      <div class="warn-icon">😴</div>
+      <div>
+        <div class="warn-title">Resting more than a young dog</div>
+        <div class="warn-body">Normal for his age and condition. Good days = interested in food, alert, wants interaction. Bad days = very lethargic, not interested in food. Call Justin if you see a bad day.</div>
+      </div>
+    </div>
+
+    <div class="warn-box warn-box-warn">
+      <div class="warn-icon">⚠️</div>
+      <div>
+        <div class="warn-title">Call Justin if you notice:</div>
+        <div class="warn-body">
+          <strong>Resting breathing rate 30–35/min · Gums pale pink · Refusing food for more than one meal ·
+          Straining or whimpering when urinating · Blood in urine · Noticeably less energy than the day before</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity & handling -->
+  <div class="card">
+    <div class="card-title" style="color:var(--orange)">🏃 Activity & Handling</div>
+    <ol class="step-list">
+      <li><div class="step-num">✓</div><div><strong>He can roam the yard on his own</strong> — he knows his limits. Let him go out as he normally would. No need for a leash for bathroom trips.</div></li>
+      <li><div class="step-num">✓</div><div><strong>Keep calm and quiet</strong> — stress can trigger episodes. Low-key cuddle time is perfect for him.</div></li>
+      <li><div class="step-num">✓</div><div><strong>No rough play</strong> with the Jack Russell Terrier that is too intense for Gizmo. Gentle interaction is fine.</div></li>
+      <li><div class="step-num">✓</div><div><strong>Watch for overexertion</strong> — if he starts panting heavily during or after mild activity, let him rest immediately.</div></li>
+      <li><div class="step-num">✓</div><div><strong>Comfortable temperature</strong> — no excessive heat or cold. Small dogs with heart conditions are more sensitive.</div></li>
+    </ol>
+  </div>
+
+  <!-- How to measure RR -->
+  <div class="card">
+    <div class="card-title" style="color:var(--pink)">🫁 How to Check Breathing Rate</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
+      Do this <strong>once per day</strong> — whenever you catch him sleeping. You don't need a set time, just take the opportunity when he's down. This is the single most important monitoring task because dogs hide illness and the breathing rate catches problems early.
+    </div>
+    <ol class="step-list">
+      <li><div class="step-num">1</div><div>Wait until Gizmo is <strong>fully asleep or resting quietly</strong> (not panting, not moving).</div></li>
+      <li><div class="step-num">2</div><div>Watch his chest or belly rise and fall. Each rise-and-fall = <strong>one breath</strong>.</div></li>
+      <li><div class="step-num">3</div><div>Count breaths for exactly <strong>30 seconds</strong>.</div></li>
+      <li><div class="step-num">4</div><div><strong>Multiply by 2</strong> to get breaths per minute.</div></li>
+      <li><div class="step-num">5</div><div>
+        <strong style="color:var(--green)">Under 30 = Normal ✓</strong><br>
+        <strong style="color:var(--yellow)">30–35 = Call Justin immediately</strong><br>
+        <strong style="color:var(--red)">Over 40 = Go to ER immediately</strong>
+      </div></li>
+    </ol>
+  </div>
+
+  <!-- A note on his personality -->
+  <div class="card" style="border-color:rgba(134,239,172,0.2);background:rgba(134,239,172,0.05);">
+    <div class="card-title" style="color:var(--green)">💚 About Gizmo</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.7;">
+      Gizmo is a tough little guy who has been through a lot — he was recently hospitalized and is on a recovery path.
+      <strong style="color:var(--text)">Good signs</strong>: interested in food, wants attention, curious about his surroundings, comfortable breathing at rest.
+      He loves his routine and does best with calm, consistent care.
+      <br><br>
+      If something seems off and you're not sure — <strong style="color:var(--text)">call Justin first</strong>.
+      It's never a bother. Gizmo is very much loved and his family trusts you with his care.
+    </div>
+  </div>
+
+</div>
+<!-- end pane-careguide -->
+
 <script>
 const STORAGE_KEY    = 'gizmo-health-log-v1';
 const INFO_KEY       = 'gizmo-info-v1';
 const CONFIG_KEY     = 'gizmo-config-v1';
 const GIST_FILE      = 'gizmo-log.json';
 const INFO_FILE      = 'gizmo-info.json';
-// ← Paste your Gist ID here once, push, and the page always loads this data
 const DEFAULT_GIST_ID = '0373bd12fe6f428a93b3e69e05d46e13';
 
 let log = [];
@@ -714,14 +1192,11 @@ function today() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-// ── Config ────────────────────────────────────────────────────────────────────
-
 function loadConfig() {
   try {
     const s = localStorage.getItem(CONFIG_KEY);
     if (s) cfg = { ...cfg, ...JSON.parse(s) };
   } catch(e) {}
-  // Priority: URL param → localStorage → hardcoded default
   const urlGist = new URLSearchParams(window.location.search).get('gist');
   if (urlGist) cfg.gistId = urlGist;
   else if (!cfg.gistId && DEFAULT_GIST_ID) cfg.gistId = DEFAULT_GIST_ID;
@@ -730,8 +1205,6 @@ function loadConfig() {
 function persistConfig() {
   try { localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg)); } catch(e) {}
 }
-
-// ── Gist API ──────────────────────────────────────────────────────────────────
 
 async function gistFetchAll() {
   if (!cfg.gistId) return null;
@@ -784,8 +1257,6 @@ async function gistCreate(token) {
   } catch(e) { return null; }
 }
 
-// ── Log load / save ───────────────────────────────────────────────────────────
-
 async function loadLog() {
   loadConfig();
   setSyncStatus('loading');
@@ -804,7 +1275,6 @@ async function loadLog() {
     setSyncStatus('local');
   }
 
-  // Fallback: localStorage cache
   try {
     const s = localStorage.getItem(STORAGE_KEY);
     if (s) log = JSON.parse(s);
@@ -833,8 +1303,6 @@ function localInfoWrite() {
   try { localStorage.setItem(INFO_KEY, JSON.stringify(vetInfo)); } catch(e) {}
 }
 
-// ── Sync status badge ─────────────────────────────────────────────────────────
-
 function setSyncStatus(state) {
   const el = document.getElementById('sync-status');
   if (!el) return;
@@ -849,8 +1317,6 @@ function setSyncStatus(state) {
   el.innerHTML = `<span style="color:${color}">${icon} ${text}</span>`;
 }
 
-// ── Form helpers ──────────────────────────────────────────────────────────────
-
 function getFormData() {
   const checkIds = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm','coughing','collapse','wet_topper','fish_oil','sardines','vomiting','blood_urine'];
   const textIds  = ['rr','rr_time','breathing_quality','appetite','food_am','food_mid','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes','cough_desc'];
@@ -863,7 +1329,7 @@ function getFormData() {
 function setFormData(data) {
   if (!data) return;
   const checkIds = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm','coughing','collapse','wet_topper','fish_oil','sardines','vomiting','blood_urine'];
-  const textIds  = ['date','rr','rr_time','breathing_quality','appetite','food_am','food_mid','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes','cough_desc'];
+  const textIds  = ['date','rr','rr_time','breathing_quality','appetite','food_am','food_mid','food_pm','water_intake','wet_topper','fish_oil','sardines','vomiting','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes','cough_desc'];
   textIds.forEach(id => { const el = document.getElementById('f-'+id); if(el) el.value = data[id] || ''; });
   checkIds.forEach(id => {
     const el = document.getElementById('f-'+id);
@@ -885,8 +1351,6 @@ function updateCheck(id) {
   const checked = document.getElementById('f-'+id)?.checked;
   syncCheckLabel(id, checked);
 }
-
-// ── Alert helpers ─────────────────────────────────────────────────────────────
 
 function checkRR() {
   const val = parseFloat(document.getElementById('f-rr').value);
@@ -918,8 +1382,6 @@ function checkCollapse() {
   document.getElementById('collapse-field').style.display = checked ? 'block' : 'none';
 }
 
-// ── Save entry ────────────────────────────────────────────────────────────────
-
 async function saveEntry() {
   const data = getFormData();
   if (!data.date) { alert('Please set a date before saving.'); return; }
@@ -943,18 +1405,14 @@ async function saveEntry() {
   setTimeout(() => { btn.textContent = "Save Today's Log"; btn.classList.remove('saved'); }, 2500);
 }
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-
 function switchTab(tab) {
-  ['today','history','vetinfo'].forEach(t => {
+  ['today','history','vetinfo','careguide'].forEach(t => {
     document.getElementById('pane-'+t).style.display = tab === t ? 'block' : 'none';
     document.getElementById('tab-'+t).className = 'tab ' + (tab === t ? 'active' : 'inactive');
   });
   if (tab === 'history') renderHistory();
   if (tab === 'vetinfo') populateVetInfoForm();
 }
-
-// ── History render ────────────────────────────────────────────────────────────
 
 function renderHistory() {
   const el = document.getElementById('history-list');
@@ -986,8 +1444,6 @@ function renderHistory() {
   }).join('');
 }
 
-// ── Export CSV ────────────────────────────────────────────────────────────────
-
 function exportCSV() {
   if (!log.length) { alert('No entries to export yet.'); return; }
   const keys = ['date','pimo_am','pimo_pm','enalapril','furo_am','furo_pm','rr','rr_time','breathing_quality','coughing','collapse','cough_desc','appetite','food_am','food_mid','food_pm','water_intake','wet_topper','fish_oil','sardines','vomiting','urination_count','urine_color','urination_quality','straining','blood_urine','bowel_count','stool_quality','energy','gum_color','weight','notes'];
@@ -1003,8 +1459,6 @@ function exportCSV() {
   a.href = url; a.download = `gizmo-log-${today()}.csv`; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-
-// ── Settings modal ────────────────────────────────────────────────────────────
 
 function openSettings() {
   document.getElementById('cfg-token').value   = cfg.token   || '';
@@ -1089,8 +1543,6 @@ function copyShareLink() {
   });
 }
 
-// ── Vet Info ──────────────────────────────────────────────────────────────────
-
 const VI_FIELDS = ['dose_pimo','dose_enalapril','dose_furo','dose_other','vet_name','vet_phone','next_appt','vet_notes'];
 
 function populateVetInfoForm() {
@@ -1118,7 +1570,7 @@ async function saveVetInfo() {
   btn.classList.add('saving');
   btn.disabled = true;
 
-  await saveLog(); // patches both log + vetInfo to Gist in one call
+  await saveLog();
 
   btn.textContent = '✓ Saved!';
   btn.classList.remove('saving');
@@ -1127,17 +1579,9 @@ async function saveVetInfo() {
   setTimeout(() => { btn.textContent = 'Save Vet Info'; btn.classList.remove('saved'); }, 2500);
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-
 const DEFAULT_VET_INFO = {
-  dose_pimo:      '',
-  dose_enalapril: '',
-  dose_furo:      '',
-  dose_other:     '',
-  vet_name:       '',
-  vet_phone:      '',
-  next_appt:      '',
-  vet_notes:      '',
+  dose_pimo: '', dose_enalapril: '', dose_furo: '', dose_other: '',
+  vet_name: '', vet_phone: '', next_appt: '', vet_notes: '',
 };
 
 (async () => {
