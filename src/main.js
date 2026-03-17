@@ -61,6 +61,11 @@ function today() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function currentTime() {
+  const d = new Date()
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T12:00:00')
   return `${DAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
@@ -222,6 +227,8 @@ function getFormData() {
   const data = { date: el('f-date').value }
   TEXT_IDS.forEach(id  => { data[id] = el('f-' + id)?.value   || '' })
   CHECK_IDS.forEach(id => { data[id] = el('f-' + id)?.checked || false })
+  // Don't persist rr_time unless an actual RR reading was entered
+  if (!data.rr) data.rr_time = ''
   return data
 }
 
@@ -229,6 +236,8 @@ function setFormData(data) {
   if (!data) return
   const allTextIds = ['date', ...TEXT_IDS]
   allTextIds.forEach(id => { const input = el('f-' + id); if (input) input.value = data[id] || '' })
+  // Default rr_time to now when no RR has been recorded for this entry
+  if (!data.rr) el('f-rr_time').value = currentTime()
   CHECK_IDS.forEach(id => {
     const input = el('f-' + id)
     if (input) { input.checked = !!data[id]; syncCheckLabel(id, !!data[id]) }

@@ -94,27 +94,37 @@
         <i class="fa-solid fa-pills text-blue-500"></i>
         Medications Given
       </div>
-      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        <label class="check-label" id="lbl-pimo_am">
-          <input type="checkbox" id="f-pimo_am" class="sr-only" onchange="updateCheck('pimo_am')">
-          <span class="check-dot">○</span><span>Pimo AM</span>
-        </label>
-        <label class="check-label" id="lbl-pimo_pm">
-          <input type="checkbox" id="f-pimo_pm" class="sr-only" onchange="updateCheck('pimo_pm')">
-          <span class="check-dot">○</span><span>Pimo PM</span>
-        </label>
-        <label class="check-label" id="lbl-enalapril">
-          <input type="checkbox" id="f-enalapril" class="sr-only" onchange="updateCheck('enalapril')">
-          <span class="check-dot">○</span><span>Enalapril</span>
-        </label>
-        <label class="check-label" id="lbl-furo_am">
-          <input type="checkbox" id="f-furo_am" class="sr-only" onchange="updateCheck('furo_am')">
-          <span class="check-dot">○</span><span>Furos AM</span>
-        </label>
-        <label class="check-label" id="lbl-furo_pm">
-          <input type="checkbox" id="f-furo_pm" class="sr-only" onchange="updateCheck('furo_pm')">
-          <span class="check-dot">○</span><span>Furos PM</span>
-        </label>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">AM (~8–9 AM)</div>
+          <div class="flex flex-col gap-2">
+            <label class="check-label" id="lbl-pimo_am">
+              <input type="checkbox" id="f-pimo_am" class="sr-only" onchange="updateCheck('pimo_am')">
+              <span class="check-dot">○</span><span>Pimobendan</span>
+            </label>
+            <label class="check-label" id="lbl-enalapril">
+              <input type="checkbox" id="f-enalapril" class="sr-only" onchange="updateCheck('enalapril')">
+              <span class="check-dot">○</span><span>Enalapril</span>
+            </label>
+            <label class="check-label" id="lbl-furo_am">
+              <input type="checkbox" id="f-furo_am" class="sr-only" onchange="updateCheck('furo_am')">
+              <span class="check-dot">○</span><span>Furosemide</span>
+            </label>
+          </div>
+        </div>
+        <div>
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">PM (~8–9 PM)</div>
+          <div class="flex flex-col gap-2">
+            <label class="check-label" id="lbl-pimo_pm">
+              <input type="checkbox" id="f-pimo_pm" class="sr-only" onchange="updateCheck('pimo_pm')">
+              <span class="check-dot">○</span><span>Pimobendan</span>
+            </label>
+            <label class="check-label" id="lbl-furo_pm">
+              <input type="checkbox" id="f-furo_pm" class="sr-only" onchange="updateCheck('furo_pm')">
+              <span class="check-dot">○</span><span>Furosemide</span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -183,11 +193,23 @@
       <div class="grid grid-cols-2 gap-3 mb-3">
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1" for="f-food_am">AM Meal (cups)</label>
-          <input type="number" id="f-food_am" placeholder="0.5" step="0.05" class="form-input">
+          <select id="f-food_am" class="form-input">
+            <option value="">Select...</option>
+            <option value="0.25">0.25</option>
+            <option value="0.4">0.4</option>
+            <option value="0.5">0.5</option>
+            <option value="0.6">0.6</option>
+          </select>
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1" for="f-food_pm">PM Meal (cups)</label>
-          <input type="number" id="f-food_pm" placeholder="0.5" step="0.05" class="form-input">
+          <select id="f-food_pm" class="form-input">
+            <option value="">Select...</option>
+            <option value="0.25">0.25</option>
+            <option value="0.4">0.4</option>
+            <option value="0.5">0.5</option>
+            <option value="0.6">0.6</option>
+          </select>
         </div>
       </div>
       <div class="mb-3">
@@ -235,24 +257,26 @@
           </select>
         </div>
       </div>
-      <div class="mb-3">
-        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-urination_quality">Stream Quality</label>
-        <select id="f-urination_quality" class="form-input">
-          <option value="">Select...</option>
-          <option>Normal stream</option>
-          <option>Weak stream</option>
-          <option>Dribbling</option>
-          <option>Marking only</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-straining">Straining to Urinate</label>
-        <select id="f-straining" onchange="checkStraining()" class="form-input">
-          <option value="">Select...</option>
-          <option>None</option>
-          <option>Mild</option>
-          <option>Significant</option>
-        </select>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-urination_quality">Stream Quality</label>
+          <select id="f-urination_quality" class="form-input">
+            <option value="">Select...</option>
+            <option>Normal stream</option>
+            <option>Weak stream</option>
+            <option>Dribbling</option>
+            <option>Marking only</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-straining">Straining</label>
+          <select id="f-straining" onchange="checkStraining()" class="form-input">
+            <option value="">Select...</option>
+            <option>None</option>
+            <option>Mild</option>
+            <option>Significant</option>
+          </select>
+        </div>
       </div>
       <label class="check-label" id="lbl-blood_urine">
         <input type="checkbox" id="f-blood_urine" class="sr-only" onchange="updateCheck('blood_urine'); checkBlood()">
@@ -306,21 +330,23 @@
           <option>Very lethargic</option>
         </select>
       </div>
-      <div class="mb-3">
-        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-gum_color">Gum Color</label>
-        <select id="f-gum_color" onchange="checkGums()" class="form-input">
-          <option value="">Select...</option>
-          <option>Pink &amp; moist</option>
-          <option>Pale pink</option>
-          <option>White / gray</option>
-          <option>Blue / purple</option>
-        </select>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-gum_color">Gum Color</label>
+          <select id="f-gum_color" onchange="checkGums()" class="form-input">
+            <option value="">Select...</option>
+            <option>Pink &amp; moist</option>
+            <option>Pale pink</option>
+            <option>White / gray</option>
+            <option>Blue / purple</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-weight">Weight (lbs)</label>
+          <input type="number" id="f-weight" placeholder="Weekly only" step="0.1" class="form-input">
+        </div>
       </div>
       <div id="gum-alert"></div>
-      <div>
-        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-weight">Weight (lbs) — weigh weekly</label>
-        <input type="number" id="f-weight" placeholder="Leave blank on non-weigh days" step="0.1" class="form-input">
-      </div>
     </div>
 
     <!-- Notes -->
