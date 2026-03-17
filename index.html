@@ -4,1184 +4,1002 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Gizmo">
-<meta name="theme-color" content="#0f172a">
+<meta name="theme-color" content="#2563eb">
 <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
 <link rel="shortcut icon" href="favicon/favicon.ico">
 <link rel="manifest" href="favicon/site.webmanifest">
 <title>Gizmo's Health Log</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0f172a;
-    --bg2: #1e1b4b;
-    --surface: rgba(255,255,255,0.05);
-    --surface2: rgba(255,255,255,0.08);
-    --border: rgba(255,255,255,0.1);
-    --border2: rgba(255,255,255,0.15);
-    --text: #f1f5f9;
-    --muted: #94a3b8;
-    --dim: #475569;
-    --blue: #93c5fd;
-    --blue-bg: rgba(147,197,253,0.15);
-    --green: #86efac;
-    --green-bg: rgba(134,239,172,0.15);
-    --red: #fca5a5;
-    --red-bg: rgba(239,68,68,0.2);
-    --yellow: #fde68a;
-    --yellow-bg: rgba(251,191,36,0.12);
-    --purple: #c4b5fd;
-    --orange: #fb923c;
-    --pink: #fda4af;
-  }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 60%, var(--bg) 100%);
-    background-attachment: fixed;
-    color: var(--text);
-    min-height: 100vh;
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-  }
-
-  /* Header */
-  .header {
-    background: rgba(15,23,42,0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .header-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
-  .header-sub { font-size: 11px; color: var(--dim); margin-top: 2px; font-family: 'DM Mono', monospace; }
-  .header-right { display: flex; align-items: center; gap: 10px; }
-
-  /* Tabs */
-  .tabs { display: flex; gap: 4px; padding: 14px 20px 0; overflow-x: auto; }
-  .tab {
-    padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 13px;
-    letter-spacing: 0.03em; cursor: pointer; border: none; font-family: inherit;
-    white-space: nowrap; transition: all 0.15s;
-  }
-  .tab.active { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(147,197,253,0.25); }
-  .tab.inactive { background: transparent; color: var(--dim); border: 1px solid transparent; }
-
-  /* Content */
-  .content { max-width: 600px; margin: 0 auto; padding: 16px 16px 40px; }
-
-  /* Section card */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px 18px;
-    margin-bottom: 14px;
-  }
-  .card-title {
-    font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
-    margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
-  }
-
-  /* Field */
-  .field { margin-bottom: 13px; }
-  .field:last-child { margin-bottom: 0; }
-  .label {
-    display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
-    text-transform: uppercase; color: var(--muted); margin-bottom: 5px;
-    font-family: 'DM Mono', monospace;
-  }
-
-  /* Inputs */
-  input[type="text"], input[type="number"], input[type="date"],
-  input[type="time"], input[type="password"], select, textarea {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
-    border-radius: 9px; color: var(--text); padding: 9px 12px; font-size: 14px;
-    font-family: inherit; outline: none; -webkit-appearance: none; appearance: none;
-    transition: border-color 0.15s;
-  }
-  input:focus, select:focus, textarea:focus {
-    border-color: rgba(147,197,253,0.4);
-    background: rgba(255,255,255,0.1);
-  }
-  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
-  textarea { min-height: 75px; resize: vertical; }
-  input[type="date"], input[type="time"] { color-scheme: dark; }
-
-  /* Grid */
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-
-  /* Checkboxes */
-  .checks { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
-  .check-label {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 12px; border-radius: 9px; font-size: 13px; cursor: pointer;
-    border: 1px solid var(--border); background: var(--surface2);
-    color: var(--muted); font-weight: 500; transition: all 0.15s; user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .check-label input { display: none; }
-  .check-label.checked { background: var(--green-bg); border-color: rgba(134,239,172,0.35); color: var(--green); font-weight: 600; }
-  .check-label.checked-warn { background: var(--red-bg); border-color: rgba(239,68,68,0.35); color: var(--red); font-weight: 600; }
-  .check-dot { font-size: 11px; }
-
-  /* Alerts */
-  .alert { border-radius: 10px; padding: 10px 13px; font-size: 13px; font-weight: 500; margin-top: 10px; }
-  .alert-danger { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.35); color: var(--red); }
-  .alert-warn { background: var(--yellow-bg); border: 1px solid rgba(251,191,36,0.3); color: var(--yellow); }
-  .alert-info { background: var(--blue-bg); border: 1px solid rgba(147,197,253,0.3); color: var(--blue); }
-
-  /* Save button */
-  .save-btn {
-    width: 100%; padding: 14px; border-radius: 14px; font-size: 15px;
-    font-weight: 800; cursor: pointer; font-family: inherit; letter-spacing: 0.04em;
-    border: 1px solid rgba(147,197,253,0.35); background: var(--blue-bg);
-    color: var(--blue); transition: all 0.2s; margin-top: 4px;
-  }
-  .save-btn.saved { background: var(--green-bg); border-color: rgba(134,239,172,0.4); color: var(--green); }
-  .save-btn.saving { opacity: 0.6; cursor: not-allowed; }
-  .save-btn:active { transform: scale(0.98); }
-
-  /* Icon buttons */
-  .icon-btn {
-    background: var(--surface2); border: 1px solid var(--border2); color: var(--muted);
-    border-radius: 9px; padding: 7px 10px; font-size: 14px; cursor: pointer;
-    font-family: inherit; white-space: nowrap; transition: all 0.15s;
-  }
-  .icon-btn:hover { color: var(--text); border-color: var(--border2); }
-
-  /* Export button */
-  .export-btn {
-    background: var(--green-bg); border: 1px solid rgba(134,239,172,0.3);
-    color: var(--green); border-radius: 9px; padding: 8px 14px; font-size: 12px;
-    font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap;
-  }
-
-  /* Sync badge */
-  #sync-status { font-size: 11px; font-family: 'DM Mono', monospace; white-space: nowrap; }
-
-  /* History cards */
-  .history-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 14px; padding: 16px; margin-bottom: 10px;
-  }
-  .history-date { font-weight: 700; font-size: 15px; }
-  .history-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .badge {
-    font-size: 11px; border-radius: 6px; padding: 3px 8px; font-weight: 600;
-    font-family: 'DM Mono', monospace;
-  }
-  .badge-rr-ok { background: var(--green-bg); color: var(--green); border: 1px solid rgba(134,239,172,0.25); }
-  .badge-rr-warn { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
-  .badge-weight { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(147,197,253,0.25); }
-  .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; margin-top: 10px; font-size: 12px; color: var(--muted); }
-  .history-notes { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text); }
-
-  /* Nutrition table */
-  .nutr-table { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 12px; }
-  .nutr-header { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); padding: 7px 12px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; }
-  .nutr-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; border-bottom: 1px solid var(--border); gap: 10px; }
-  .nutr-row:last-child { border-bottom: none; }
-  .nutr-highlight { background: rgba(147,197,253,0.05); }
-  .nutr-label { font-size: 13px; color: var(--muted); }
-  .nutr-highlight .nutr-label { color: var(--blue); font-weight: 600; }
-  .nutr-val { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--text); font-weight: 500; text-align: right; }
-  .nutr-unit { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; }
-  .nutr-missing { color: var(--dim); font-style: italic; font-size: 12px; }
-
-  /* Medication table */
-  .med-header-row { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); }
-  .med-header-row span { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--dim); font-family: 'DM Mono', monospace; }
-  .med-row { display: flex; align-items: center; gap: 8px; padding: 4px 12px; border-bottom: 1px solid var(--border); }
-  .med-row:last-child { border-bottom: none; }
-  .med-row input { background: transparent; border: none; border-bottom: 1px solid transparent; border-radius: 0; color: var(--text); padding: 5px 2px; font-size: 13px; font-family: inherit; outline: none; width: 100%; }
-  .med-row input:focus { border-bottom-color: rgba(147,197,253,0.4); }
-  .med-col-name { flex: 2; min-width: 0; }
-  .med-col-dose { flex: 1; min-width: 0; }
-  .med-col-freq { flex: 1.5; min-width: 0; }
-  .med-col-del { flex-shrink: 0; width: 24px; }
-  .med-del { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 14px; padding: 2px 4px; line-height: 1; }
-  .med-del:hover { color: var(--red); }
-
-  /* Empty state */
-  .empty { text-align: center; padding: 60px 20px; color: var(--dim); font-size: 15px; }
-
-  /* Modal */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-    z-index: 200; padding: 20px; overflow-y: auto;
-  }
-  .modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
-  .modal {
-    background: #1a1f35; border: 1px solid var(--border2); border-radius: 20px;
-    padding: 24px; width: 100%; max-width: 500px; margin: auto;
-  }
-  .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
-  .modal-desc { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
-  .modal-section { margin-bottom: 20px; }
-  .modal-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); margin-bottom: 10px; font-family: 'DM Mono', monospace; }
-  .modal-row { display: flex; gap: 8px; margin-bottom: 8px; }
-  .modal-row input { flex: 1; }
-  .btn {
-    padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700;
-    cursor: pointer; font-family: inherit; border: none; transition: all 0.15s; white-space: nowrap;
-  }
-  .btn-primary { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(147,197,253,0.3); }
-  .btn-secondary { background: var(--surface2); color: var(--muted); border: 1px solid var(--border2); }
-  .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
-  .btn-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(134,239,172,0.3); }
-  .share-box {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    padding: 10px 12px; font-size: 12px; font-family: 'DM Mono', monospace;
-    color: var(--blue); word-break: break-all; margin-bottom: 8px;
-  }
-  .modal-msg { font-size: 12px; margin-top: 8px; min-height: 18px; font-family: 'DM Mono', monospace; }
-
-  /* ── Care Guide styles ──────────────────────────────── */
-
-  /* Print button */
-  .print-btn {
-    background: var(--purple); color: #1a1035; border-radius: 9px;
-    padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
-    font-family: inherit; white-space: nowrap; border: none;
-  }
-
-  /* Timeline */
-  .timeline { position: relative; padding-left: 28px; }
-  .timeline::before {
-    content: ''; position: absolute; left: 10px; top: 6px; bottom: 6px;
-    width: 2px; background: var(--border); border-radius: 2px;
-  }
-  .timeline-item { position: relative; margin-bottom: 20px; }
-  .timeline-item:last-child { margin-bottom: 0; }
-  .timeline-dot {
-    position: absolute; left: -22px; top: 3px;
-    width: 16px; height: 16px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9px; font-weight: 700; border: 2px solid var(--bg);
-    flex-shrink: 0;
-  }
-  .dot-purple { background: var(--purple); }
-  .dot-green  { background: var(--green); }
-  .dot-blue   { background: var(--blue); }
-  .dot-yellow { background: var(--yellow); }
-  .dot-orange { background: var(--orange); }
-  .dot-pink   { background: var(--pink); }
-
-  .tl-time {
-    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700;
-    color: var(--muted); letter-spacing: 0.06em; margin-bottom: 4px;
-  }
-  .tl-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
-  .tl-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
-  .tl-body strong { color: var(--text); font-weight: 600; }
-
-  /* Steps */
-  .step-list { list-style: none; }
-  .step-list li {
-    display: flex; gap: 10px; align-items: flex-start;
-    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
-    line-height: 1.55; color: var(--muted);
-  }
-  .step-list li:last-child { border-bottom: none; }
-  .step-num {
-    flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
-    background: var(--surface2); border: 1px solid var(--border2);
-    font-size: 10px; font-weight: 800; color: var(--dim);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'DM Mono', monospace; margin-top: 1px;
-  }
-  .step-list li strong { color: var(--text); font-weight: 600; }
-
-  /* Pill tracker */
-  .pill-row {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 11px 0; border-bottom: 1px solid var(--border);
-  }
-  .pill-row:last-child { border-bottom: none; }
-  .pill-icon {
-    font-size: 18px; flex-shrink: 0; width: 32px; text-align: center; margin-top: 1px;
-  }
-  .pill-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-  .pill-detail { font-size: 12px; color: var(--muted); line-height: 1.55; }
-  .pill-detail strong { color: var(--text); font-weight: 600; }
-  .pill-timing {
-    margin-left: auto; flex-shrink: 0; text-align: right;
-  }
-  .pill-time-badge {
-    display: inline-block; font-family: 'DM Mono', monospace; font-size: 11px;
-    font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-bottom: 3px;
-  }
-  .time-am { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(253,230,138,0.25); }
-  .time-pm { background: var(--purple); color: #1a1035; }
-  .time-daily { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(147,197,253,0.25); }
-
-  /* Warning box */
-  .warn-box {
-    border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
-    display: flex; gap: 12px; align-items: flex-start;
-  }
-  .warn-box-danger { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.3); }
-  .warn-box-warn   { background: var(--yellow-bg); border: 1px solid rgba(251,191,36,0.25); }
-  .warn-box-ok     { background: var(--green-bg); border: 1px solid rgba(134,239,172,0.25); }
-  .warn-icon { font-size: 20px; flex-shrink: 0; }
-  .warn-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-  .warn-box-danger .warn-title { color: var(--red); }
-  .warn-box-warn   .warn-title { color: var(--yellow); }
-  .warn-box-ok     .warn-title { color: var(--green); }
-  .warn-body { font-size: 12px; line-height: 1.6; color: var(--muted); }
-  .warn-body strong { font-weight: 600; color: var(--text); }
-
-  /* Food visual */
-  .food-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
-  .food-row:last-child { border-bottom: none; }
-  .food-icon { font-size: 20px; flex-shrink: 0; width: 30px; text-align: center; }
-  .food-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-  .food-detail { font-size: 12px; color: var(--muted); }
-  .food-amount {
-    margin-left: auto; flex-shrink: 0;
-    font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700;
-    color: var(--blue); background: var(--blue-bg); padding: 4px 9px;
-    border-radius: 7px; border: 1px solid rgba(147,197,253,0.2); text-align: right;
-  }
-
-  /* Contact card */
-  .contact-row {
-    display: flex; align-items: center; gap: 12px; padding: 9px 0;
-    border-bottom: 1px solid var(--border); font-size: 13px;
-  }
-  .contact-row:last-child { border-bottom: none; }
-  .contact-icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
-  .contact-label { color: rgba(255,255,255,0.6); font-size: 11px; font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.07em; }
-  .contact-val { font-weight: 600; color: var(--text); }
-
-  @media print {
-    .header, .tabs, #tab-careguide ~ *, .print-btn, .icon-btn, .export-btn { display: none !important; }
-    #pane-careguide { display: block !important; }
-    body { background: white; color: black; }
-    .card { border: 1px solid #ccc; background: white; break-inside: avoid; }
-    .warn-box-danger { background: #fef2f2; border-color: #fca5a5; }
-    .warn-title { color: #dc2626 !important; }
-  }
-
-  @media (max-width: 400px) {
-    .grid3 { grid-template-columns: 1fr 1fr; }
-    .header-title { font-size: 16px; }
-    .pill-timing { display: none; }
-  }
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
+<script type="module" src="/src/main.js"></script>
 </head>
-<body>
+<body class="bg-gray-50 min-h-screen">
 
-<div class="header">
-  <div>
-    <div class="header-title">Gizmo's Health Log</div>
-    <div class="header-sub">CHF Stage C · 12yr · ~8 lbs · Chihuahua mix</div>
+<!-- ══════════════════════════════════════════════════════ HEADER -->
+<header class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+  <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+    <div>
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-dog text-blue-600 text-lg"></i>
+        <h1 class="font-bold text-gray-900 text-lg leading-none">Gizmo's Health Log</h1>
+      </div>
+      <p class="text-xs text-gray-400 mt-1 pl-7">CHF Stage C · 12yr · ~8 lbs · Chihuahua mix</p>
+    </div>
+    <div class="flex items-center gap-1">
+      <div id="sync-status" class="flex items-center gap-1.5 mr-1"></div>
+      <button onclick="exportCSV()" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors" title="Export CSV">
+        <i class="fa-solid fa-file-csv text-sm"></i>
+      </button>
+      <button onclick="openSettings()" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors" title="Settings">
+        <i class="fa-solid fa-gear text-sm"></i>
+      </button>
+    </div>
   </div>
-  <div class="header-right">
-    <span id="sync-status"></span>
-    <button class="icon-btn" onclick="openSettings()" title="Cloud sync settings">⚙ Sync</button>
-    <button class="export-btn" onclick="exportCSV()">⬇ CSV</button>
-  </div>
-</div>
+</header>
 
-<!-- SETTINGS MODAL -->
-<div class="modal-overlay" id="settings-modal">
-  <div class="modal">
-    <div class="modal-title">☁ Cloud Sync Setup</div>
-    <div class="modal-desc">
-      Store entries in a GitHub Gist so history is accessible from any device.
-      Anyone with the share link can view — no login needed to read.
+<!-- ══════════════════════════════════════════════════════ TABS -->
+<nav class="sticky top-[65px] z-40 bg-white border-b border-gray-200 overflow-x-auto">
+  <div class="flex max-w-lg mx-auto">
+    <button id="tab-today" class="tab active" onclick="switchTab('today')">
+      <i class="fa-solid fa-house text-sm"></i>
+      <span>Today</span>
+    </button>
+    <button id="tab-trends" class="tab inactive" onclick="switchTab('trends')">
+      <i class="fa-solid fa-chart-line text-sm"></i>
+      <span>Trends</span>
+    </button>
+    <button id="tab-history" class="tab inactive" onclick="switchTab('history')">
+      <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+      <span>History <span id="hist-count" class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">0</span></span>
+    </button>
+    <button id="tab-vetinfo" class="tab inactive" onclick="switchTab('vetinfo')">
+      <i class="fa-solid fa-stethoscope text-sm"></i>
+      <span>Vet Info</span>
+    </button>
+    <button id="tab-vetnotes" class="tab inactive" onclick="switchTab('vetnotes')">
+      <i class="fa-solid fa-notes-medical text-sm"></i>
+      <span>Notes</span>
+    </button>
+    <button id="tab-careguide" class="tab inactive" onclick="switchTab('careguide')">
+      <i class="fa-solid fa-book-medical text-sm"></i>
+      <span>Guide</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════ MAIN -->
+<main class="max-w-lg mx-auto px-4 py-4 pb-10">
+
+  <!-- ───────────────────────────────────── TODAY PANE -->
+  <div id="pane-today">
+
+    <!-- Date -->
+    <div class="section-card">
+      <label class="section-title" for="f-date">
+        <i class="fa-solid fa-calendar-day text-gray-400"></i>
+        Log Date
+      </label>
+      <input type="date" id="f-date" onchange="onDateChange()" class="form-input">
     </div>
 
-    <div class="modal-section">
-      <div class="modal-section-title">Step 1 — GitHub Token (stays on this device)</div>
-      <div class="modal-row">
-        <input type="password" id="cfg-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+    <!-- Medications -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-pills text-blue-500"></i>
+        Medications Given
       </div>
-      <div style="font-size:11px;color:var(--dim);line-height:1.6;">
-        Create a token at <strong style="color:var(--muted)">github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong>.
-        Select the <strong style="color:var(--muted)">gist</strong> scope only.
+      <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <label class="check-label" id="lbl-pimo_am">
+          <input type="checkbox" id="f-pimo_am" class="sr-only" onchange="updateCheck('pimo_am')">
+          <span class="check-dot">○</span><span>Pimo AM</span>
+        </label>
+        <label class="check-label" id="lbl-pimo_pm">
+          <input type="checkbox" id="f-pimo_pm" class="sr-only" onchange="updateCheck('pimo_pm')">
+          <span class="check-dot">○</span><span>Pimo PM</span>
+        </label>
+        <label class="check-label" id="lbl-enalapril">
+          <input type="checkbox" id="f-enalapril" class="sr-only" onchange="updateCheck('enalapril')">
+          <span class="check-dot">○</span><span>Enalapril</span>
+        </label>
+        <label class="check-label" id="lbl-furo_am">
+          <input type="checkbox" id="f-furo_am" class="sr-only" onchange="updateCheck('furo_am')">
+          <span class="check-dot">○</span><span>Furos AM</span>
+        </label>
+        <label class="check-label" id="lbl-furo_pm">
+          <input type="checkbox" id="f-furo_pm" class="sr-only" onchange="updateCheck('furo_pm')">
+          <span class="check-dot">○</span><span>Furos PM</span>
+        </label>
       </div>
     </div>
 
-    <div class="modal-section">
-      <div class="modal-section-title">Step 2 — Gist Storage</div>
-      <div id="gist-no-id">
-        <button class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="handleCreateGist()">
-          ✦ Create new Gist for Gizmo's data
-        </button>
-        <div style="text-align:center;font-size:12px;color:var(--dim);margin-bottom:8px;">— or link an existing Gist —</div>
-        <div class="modal-row">
-          <input type="text" id="cfg-gist-id" placeholder="Gist ID (32-char hex string)">
-          <button class="btn btn-secondary" onclick="handleLinkGist()">Link</button>
+    <!-- Respiratory -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-lungs text-rose-500"></i>
+        Respiratory — #1 Priority
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-rr">Resting RR (breaths/min)</label>
+          <input type="number" id="f-rr" placeholder="e.g. 22" oninput="checkRR()" class="form-input">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-rr_time">Time Measured</label>
+          <input type="time" id="f-rr_time" class="form-input">
         </div>
       </div>
-      <div id="gist-has-id" style="display:none;">
-        <div class="alert alert-info" style="margin-top:0;margin-bottom:10px;">
-          ✓ Gist linked: <span id="gist-id-display" style="font-family:'DM Mono',monospace;font-size:11px;word-break:break-all;"></span>
+      <div id="rr-alert"></div>
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-breathing_quality">Breathing Quality at Rest</label>
+        <select id="f-breathing_quality" class="form-input">
+          <option value="">Select...</option>
+          <option>Normal</option>
+          <option>Slightly labored</option>
+          <option>Labored</option>
+          <option>Very labored</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="check-label" id="lbl-coughing">
+          <input type="checkbox" id="f-coughing" class="sr-only" onchange="updateCheck('coughing')">
+          <span class="check-dot">○</span><span>Coughing today</span>
+        </label>
+        <label class="check-label" id="lbl-collapse">
+          <input type="checkbox" id="f-collapse" class="sr-only" onchange="updateCheck('collapse'); checkCollapse()">
+          <span class="check-dot">○</span>
+          <span>Collapse episode</span>
+          <i class="fa-solid fa-circle-exclamation text-red-400 ml-auto text-xs"></i>
+        </label>
+      </div>
+      <div id="collapse-field" style="display:none;" class="mt-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-cough_desc">Describe episode</label>
+        <input type="text" id="f-cough_desc" placeholder="When, duration, severity..." class="form-input">
+      </div>
+    </div>
+
+    <!-- Eating & Drinking -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-utensils text-emerald-500"></i>
+        Eating &amp; Drinking
+      </div>
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-appetite">Appetite Overall</label>
+        <select id="f-appetite" class="form-input">
+          <option value="">Select...</option>
+          <option>Great — ate everything</option>
+          <option>Good — ate most</option>
+          <option>Fair — ate some</option>
+          <option>Poor — ate little</option>
+          <option>None — refused food</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-food_am">AM Meal (cups)</label>
+          <input type="number" id="f-food_am" placeholder="0.5" step="0.05" class="form-input">
         </div>
-        <button class="btn btn-danger" style="font-size:12px;" onclick="handleUnlinkGist()">✕ Unlink Gist</button>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-food_pm">PM Meal (cups)</label>
+          <input type="number" id="f-food_pm" placeholder="0.5" step="0.05" class="form-input">
+        </div>
       </div>
-      <div class="modal-msg" id="gist-msg"></div>
-    </div>
-
-    <div class="modal-section" id="share-section" style="display:none;">
-      <div class="modal-section-title">Share Link (read-only for anyone)</div>
-      <div class="share-box" id="share-link-box"></div>
-      <button class="btn btn-green" style="width:100%;" onclick="copyShareLink()">⎘ Copy share link</button>
-      <div class="modal-msg" id="copy-msg"></div>
-    </div>
-
-    <div style="display:flex;gap:8px;margin-top:8px;">
-      <button class="btn btn-primary" style="flex:1;" onclick="saveSettings()">Save Settings</button>
-      <button class="btn btn-secondary" onclick="closeSettings()">Close</button>
-    </div>
-  </div>
-</div>
-
-<div class="tabs">
-  <button class="tab active" id="tab-today" onclick="switchTab('today')">Today's Log</button>
-  <button class="tab inactive" id="tab-history" onclick="switchTab('history')">History (<span id="hist-count">0</span>)</button>
-  <button class="tab inactive" id="tab-vetinfo" onclick="switchTab('vetinfo')">Vet Info</button>
-  <button class="tab inactive" id="tab-vetnotes" onclick="switchTab('vetnotes')">Vet Notes</button>
-  <button class="tab inactive" id="tab-careguide" onclick="switchTab('careguide')">Care Guide</button>
-</div>
-
-<!-- TODAY FORM -->
-<div class="content" id="pane-today">
-
-  <div class="field" style="margin-bottom:14px;">
-    <label class="label">Log Date</label>
-    <input type="date" id="f-date" onchange="onDateChange()">
-  </div>
-
-  <!-- Medications -->
-  <div class="card">
-    <div class="card-title" style="color:var(--purple)">💊 Medications Given</div>
-    <div class="checks">
-      <label class="check-label" id="lbl-pimo_am"><input type="checkbox" id="f-pimo_am" onchange="updateCheck('pimo_am')"><span class="check-dot">○</span> Pimo AM</label>
-      <label class="check-label" id="lbl-pimo_pm"><input type="checkbox" id="f-pimo_pm" onchange="updateCheck('pimo_pm')"><span class="check-dot">○</span> Pimo PM</label>
-      <label class="check-label" id="lbl-enalapril"><input type="checkbox" id="f-enalapril" onchange="updateCheck('enalapril')"><span class="check-dot">○</span> Enalapril</label>
-      <label class="check-label" id="lbl-furo_am"><input type="checkbox" id="f-furo_am" onchange="updateCheck('furo_am')"><span class="check-dot">○</span> Furos AM</label>
-      <label class="check-label" id="lbl-furo_pm"><input type="checkbox" id="f-furo_pm" onchange="updateCheck('furo_pm')"><span class="check-dot">○</span> Furos PM</label>
-    </div>
-  </div>
-
-  <!-- Respiratory -->
-  <div class="card">
-    <div class="card-title" style="color:var(--pink)">🫁 Respiratory — #1 Priority</div>
-    <div class="grid2">
-      <div class="field">
-        <label class="label">Resting RR (breaths/min)</label>
-        <input type="number" id="f-rr" placeholder="e.g. 22" oninput="checkRR()">
-      </div>
-      <div class="field">
-        <label class="label">Time Measured</label>
-        <input type="time" id="f-rr_time">
-      </div>
-    </div>
-    <div id="rr-alert"></div>
-    <div class="field">
-      <label class="label">Breathing Quality at Rest</label>
-      <select id="f-breathing_quality">
-        <option value="">Select...</option>
-        <option>Normal</option>
-        <option>Slightly labored</option>
-        <option>Labored</option>
-        <option>Very labored</option>
-      </select>
-    </div>
-    <div class="checks">
-      <label class="check-label" id="lbl-coughing"><input type="checkbox" id="f-coughing" onchange="updateCheck('coughing')"><span class="check-dot">○</span> Coughing today</label>
-      <label class="check-label check-warn" id="lbl-collapse"><input type="checkbox" id="f-collapse" onchange="updateCheck('collapse'); checkCollapse()"><span class="check-dot">○</span> Collapse episode 🚨</label>
-    </div>
-    <div id="collapse-field" style="display:none; margin-top:12px;">
-      <div class="field">
-        <label class="label">Describe episode</label>
-        <input type="text" id="f-cough_desc" placeholder="When, duration, severity...">
-      </div>
-    </div>
-  </div>
-
-  <!-- Eating & Drinking -->
-  <div class="card">
-    <div class="card-title" style="color:var(--green)">🍗 Eating & Drinking</div>
-    <div class="field">
-      <label class="label">Appetite Overall</label>
-      <select id="f-appetite">
-        <option value="">Select...</option>
-        <option>Great — ate everything</option>
-        <option>Good — ate most</option>
-        <option>Fair — ate some</option>
-        <option>Poor — ate little</option>
-        <option>None — refused food</option>
-      </select>
-    </div>
-    <div class="grid3">
-      <div class="field">
-        <label class="label">AM Meal (cups)</label>
-        <input type="number" id="f-food_am" placeholder="0.3" step="0.05">
-      </div>
-      <div class="field">
-        <label class="label">Mid Meal (cups)</label>
-        <input type="number" id="f-food_mid" placeholder="0.3" step="0.05">
-      </div>
-      <div class="field">
-        <label class="label">PM Meal (cups)</label>
-        <input type="number" id="f-food_pm" placeholder="0.3" step="0.05">
-      </div>
-    </div>
-    <div class="field">
-      <label class="label">Water Intake</label>
-      <select id="f-water_intake">
-        <option value="">Select...</option>
-        <option>Normal</option>
-        <option>More than usual</option>
-        <option>Less than usual</option>
-        <option>Not drinking</option>
-      </select>
-    </div>
-    <div class="checks">
-      <label class="check-label" id="lbl-wet_topper"><input type="checkbox" id="f-wet_topper" onchange="updateCheck('wet_topper')"><span class="check-dot">○</span> Wet topper</label>
-      <label class="check-label" id="lbl-fish_oil"><input type="checkbox" id="f-fish_oil" onchange="updateCheck('fish_oil')"><span class="check-dot">○</span> Fish oil</label>
-      <label class="check-label" id="lbl-sardines"><input type="checkbox" id="f-sardines" onchange="updateCheck('sardines')"><span class="check-dot">○</span> Sardines (skip oil)</label>
-      <label class="check-label" id="lbl-vomiting"><input type="checkbox" id="f-vomiting" onchange="updateCheck('vomiting')"><span class="check-dot">○</span> Vomiting today</label>
-    </div>
-  </div>
-
-  <!-- Urination -->
-  <div class="card">
-    <div class="card-title" style="color:var(--yellow)">💧 Urination — Prostate & Kidney Monitor</div>
-    <div class="grid2">
-      <div class="field">
-        <label class="label">Times Urinated</label>
-        <input type="number" id="f-urination_count" placeholder="e.g. 5">
-      </div>
-      <div class="field">
-        <label class="label">Urine Color</label>
-        <select id="f-urine_color">
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-water_intake">Water Intake</label>
+        <select id="f-water_intake" class="form-input">
           <option value="">Select...</option>
-          <option>Clear / pale yellow</option>
-          <option>Yellow</option>
-          <option>Dark yellow</option>
-          <option>Orange / brown</option>
-          <option>Pink / red</option>
+          <option>Normal</option>
+          <option>More than usual</option>
+          <option>Less than usual</option>
+          <option>Not drinking</option>
         </select>
       </div>
-    </div>
-    <div class="field">
-      <label class="label">Stream Quality</label>
-      <select id="f-urination_quality">
-        <option value="">Select...</option>
-        <option>Normal stream</option>
-        <option>Weak stream</option>
-        <option>Dribbling</option>
-        <option>Marking only</option>
-      </select>
-    </div>
-    <div class="field">
-      <label class="label">Straining to Urinate</label>
-      <select id="f-straining" onchange="checkStraining()">
-        <option value="">Select...</option>
-        <option>None</option>
-        <option>Mild</option>
-        <option>Significant</option>
-      </select>
-    </div>
-    <div class="checks">
-      <label class="check-label" id="lbl-blood_urine"><input type="checkbox" id="f-blood_urine" onchange="updateCheck('blood_urine'); checkBlood()"><span class="check-dot">○</span> Blood in urine 🚨</label>
-    </div>
-    <div id="blood-alert"></div>
-    <div id="strain-alert"></div>
-  </div>
-
-  <!-- Defecation -->
-  <div class="card">
-    <div class="card-title" style="color:var(--purple)">🌿 Bowel Movements</div>
-    <div class="grid2">
-      <div class="field">
-        <label class="label">Times Today</label>
-        <input type="number" id="f-bowel_count" placeholder="e.g. 2">
+      <div class="grid grid-cols-2 gap-2">
+        <label class="check-label" id="lbl-wet_topper">
+          <input type="checkbox" id="f-wet_topper" class="sr-only" onchange="updateCheck('wet_topper')">
+          <span class="check-dot">○</span><span>Wet topper</span>
+        </label>
+        <label class="check-label" id="lbl-vomiting">
+          <input type="checkbox" id="f-vomiting" class="sr-only" onchange="updateCheck('vomiting')">
+          <span class="check-dot">○</span><span>Vomiting today</span>
+        </label>
       </div>
-      <div class="field">
-        <label class="label">Stool Quality</label>
-        <select id="f-stool_quality">
+    </div>
+
+    <!-- Urination -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-droplet text-amber-500"></i>
+        Urination — Prostate &amp; Kidney Monitor
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-urination_count">Times Urinated</label>
+          <input type="number" id="f-urination_count" placeholder="e.g. 5" class="form-input">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-urine_color">Urine Color</label>
+          <select id="f-urine_color" class="form-input">
+            <option value="">Select...</option>
+            <option>Clear / pale yellow</option>
+            <option>Yellow</option>
+            <option>Dark yellow</option>
+            <option>Orange / brown</option>
+            <option>Pink / red</option>
+          </select>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-urination_quality">Stream Quality</label>
+        <select id="f-urination_quality" class="form-input">
           <option value="">Select...</option>
-          <option>Normal formed</option>
-          <option>Soft</option>
-          <option>Loose</option>
-          <option>Diarrhea</option>
-          <option>None today</option>
+          <option>Normal stream</option>
+          <option>Weak stream</option>
+          <option>Dribbling</option>
+          <option>Marking only</option>
         </select>
       </div>
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-straining">Straining to Urinate</label>
+        <select id="f-straining" onchange="checkStraining()" class="form-input">
+          <option value="">Select...</option>
+          <option>None</option>
+          <option>Mild</option>
+          <option>Significant</option>
+        </select>
+      </div>
+      <label class="check-label" id="lbl-blood_urine">
+        <input type="checkbox" id="f-blood_urine" class="sr-only" onchange="updateCheck('blood_urine'); checkBlood()">
+        <span class="check-dot">○</span>
+        <span>Blood in urine</span>
+        <i class="fa-solid fa-circle-exclamation text-red-400 ml-auto text-xs"></i>
+      </label>
+      <div id="blood-alert"></div>
+      <div id="strain-alert"></div>
+    </div>
+
+    <!-- Bowel Movements -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-toilet text-orange-500"></i>
+        Bowel Movements
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-bowel_count">Times Today</label>
+          <input type="number" id="f-bowel_count" placeholder="e.g. 2" class="form-input">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 mb-1" for="f-stool_quality">Stool Quality</label>
+          <select id="f-stool_quality" class="form-input">
+            <option value="">Select...</option>
+            <option>Normal formed</option>
+            <option>Soft</option>
+            <option>Loose</option>
+            <option>Diarrhea</option>
+            <option>None today</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- General Wellness -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-heart-pulse text-violet-500"></i>
+        General Wellness
+      </div>
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-energy">Energy Level</label>
+        <select id="f-energy" class="form-input">
+          <option value="">Select...</option>
+          <option>High — very playful</option>
+          <option>Normal for Gizmo</option>
+          <option>Lower than usual</option>
+          <option>Lethargic</option>
+          <option>Very lethargic</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-gum_color">Gum Color</label>
+        <select id="f-gum_color" onchange="checkGums()" class="form-input">
+          <option value="">Select...</option>
+          <option>Pink &amp; moist</option>
+          <option>Pale pink</option>
+          <option>White / gray</option>
+          <option>Blue / purple</option>
+        </select>
+      </div>
+      <div id="gum-alert"></div>
+      <div>
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="f-weight">Weight (lbs) — weigh weekly</label>
+        <input type="number" id="f-weight" placeholder="Leave blank on non-weigh days" step="0.1" class="form-input">
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-pen-to-square text-slate-500"></i>
+        Notes for Vet
+      </div>
+      <textarea id="f-notes" placeholder="Any behavioral changes, unusual symptoms, questions for next appointment..."
+        class="form-input min-h-[80px] resize-none"></textarea>
+    </div>
+
+    <button class="btn-primary" id="save-btn" onclick="saveEntry()">
+      <i class="fa-solid fa-floppy-disk mr-2"></i>Save Today's Log
+    </button>
+  </div>
+  <!-- end pane-today -->
+
+  <!-- ───────────────────────────────────── TRENDS PANE -->
+  <div id="pane-trends" style="display:none;">
+    <p class="text-xs text-gray-400 text-center mb-4">Showing last 30 days of logged data</p>
+
+    <!-- Respiratory Rate -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-lungs text-rose-500"></i>
+        Respiratory Rate (breaths/min)
+      </div>
+      <div class="flex items-center gap-4 mb-3 text-xs text-gray-400">
+        <span class="flex items-center gap-1.5">
+          <span class="inline-block w-5 border-t-2 border-dashed border-red-300"></span>ER threshold (40)
+        </span>
+        <span class="flex items-center gap-1.5">
+          <span class="inline-block w-5 border-t-2 border-dashed border-yellow-400"></span>Vet call (30)
+        </span>
+      </div>
+      <div id="chart-rr-wrap"><canvas id="chart-rr"></canvas></div>
+    </div>
+
+    <!-- Weight -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-weight-scale text-indigo-500"></i>
+        Weight (lbs)
+      </div>
+      <div id="chart-weight-wrap"><canvas id="chart-weight"></canvas></div>
+    </div>
+
+    <!-- Food Intake -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-utensils text-emerald-500"></i>
+        Daily Food Intake (cups)
+      </div>
+      <div id="chart-food-wrap"><canvas id="chart-food"></canvas></div>
+    </div>
+
+    <!-- Urination Count -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-droplet text-amber-500"></i>
+        Urination Count
+      </div>
+      <div id="chart-urination-wrap"><canvas id="chart-urination"></canvas></div>
+    </div>
+
+    <!-- Energy Level -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-bolt text-yellow-500"></i>
+        Energy Level
+      </div>
+      <div id="chart-energy-wrap"><canvas id="chart-energy"></canvas></div>
+    </div>
+
+    <!-- Medication Compliance -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-pills text-blue-500"></i>
+        Medication Compliance
+      </div>
+      <div id="chart-meds-wrap"><canvas id="chart-meds"></canvas></div>
     </div>
   </div>
+  <!-- end pane-trends -->
 
-  <!-- Wellness -->
-  <div class="card">
-    <div class="card-title" style="color:var(--blue)">🩺 General Wellness</div>
-    <div class="field">
-      <label class="label">Energy Level</label>
-      <select id="f-energy">
-        <option value="">Select...</option>
-        <option>High — very playful</option>
-        <option>Normal for Gizmo</option>
-        <option>Lower than usual</option>
-        <option>Lethargic</option>
-        <option>Very lethargic</option>
-      </select>
-    </div>
-    <div class="field">
-      <label class="label">Gum Color</label>
-      <select id="f-gum_color" onchange="checkGums()">
-        <option value="">Select...</option>
-        <option>Pink & moist ✓</option>
-        <option>Pale pink</option>
-        <option>White / gray ⚠️</option>
-        <option>Blue / purple 🚨</option>
-      </select>
-    </div>
-    <div id="gum-alert"></div>
-    <div class="field">
-      <label class="label">Weight (lbs) — weigh weekly</label>
-      <input type="number" id="f-weight" placeholder="Leave blank on non-weigh days" step="0.1">
-    </div>
+  <!-- ───────────────────────────────────── HISTORY PANE -->
+  <div id="pane-history" style="display:none;">
+    <div id="history-list"></div>
   </div>
 
-  <!-- Notes -->
-  <div class="card">
-    <div class="card-title" style="color:var(--orange)">📝 Notes for Vet</div>
-    <div class="field">
-      <textarea id="f-notes" placeholder="Any behavioral changes, unusual symptoms, questions for next appointment..."></textarea>
-    </div>
-  </div>
+  <!-- ───────────────────────────────────── VET INFO PANE -->
+  <div id="pane-vetinfo" style="display:none;">
 
-  <button class="save-btn" id="save-btn" onclick="saveEntry()">Save Today's Log</button>
-</div>
-
-<!-- HISTORY PANE -->
-<div class="content" id="pane-history" style="display:none;">
-  <div id="history-list"></div>
-</div>
-
-<!-- VET INFO PANE -->
-<div class="content" id="pane-vetinfo" style="display:none;">
-
-  <!-- Medications -->
-  <div class="card">
-    <div class="card-title" style="color:var(--purple)">💉 Current Medications</div>
-    <div class="nutr-table">
-      <div class="med-header-row">
-        <span class="med-col-name">Medication</span>
-        <span class="med-col-dose">Dose</span>
-        <span class="med-col-freq">Frequency</span>
-        <span class="med-col-del"></span>
+    <!-- Medications table -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-syringe text-violet-500"></i>
+        Current Medications
+      </div>
+      <div class="hidden sm:flex gap-2 mb-1 px-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        <span class="flex-1">Medication</span>
+        <span class="w-24">Dose</span>
+        <span class="w-28">Frequency</span>
+        <span class="w-8"></span>
       </div>
       <div id="meds-table-body"></div>
+      <button class="btn-secondary w-full mt-3" onclick="addMedRow()">
+        <i class="fa-solid fa-plus mr-1.5"></i>Add Medication
+      </button>
     </div>
-    <button class="btn btn-secondary" style="width:100%;margin-top:10px;" onclick="addMedRow()">+ Add Medication</button>
+
+    <!-- Dry Kibble -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-bowl-food text-emerald-500"></i>
+        Dry Kibble
+      </div>
+      <div class="font-semibold text-gray-800 text-sm">Kirkland Signature Adult Dog</div>
+      <div class="text-xs text-gray-500 mb-3">Chicken, Rice &amp; Vegetable Formula · 1 cup/day</div>
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Calorie Content</div>
+      <div class="space-y-1.5 mb-3 text-sm">
+        <div class="flex justify-between"><span class="text-gray-600">Energy</span><span class="font-medium text-gray-800">393 <span class="text-xs text-gray-400">kcal/cup</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Energy density</span><span class="font-medium text-gray-800">3,754 <span class="text-xs text-gray-400">kcal/kg</span></span></div>
+      </div>
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Guaranteed Analysis</div>
+      <div class="space-y-1.5 text-sm">
+        <div class="flex justify-between"><span class="text-gray-600">Crude Protein</span><span class="font-medium text-gray-800">26 <span class="text-xs text-gray-400">% min</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Crude Fat</span><span class="font-medium text-gray-800">16 <span class="text-xs text-gray-400">% min</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Crude Fiber</span><span class="font-medium text-gray-800">4 <span class="text-xs text-gray-400">% max</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Moisture</span><span class="font-medium text-gray-800">10 <span class="text-xs text-gray-400">% max</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Omega-6</span><span class="font-medium text-gray-800">2.5 <span class="text-xs text-gray-400">% min</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Omega-3</span><span class="font-medium text-gray-800">0.4 <span class="text-xs text-gray-400">% min</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Glucosamine</span><span class="font-medium text-gray-800">300 <span class="text-xs text-gray-400">mg/kg min</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Chondroitin Sulfate</span><span class="font-medium text-gray-800">100 <span class="text-xs text-gray-400">mg/kg min</span></span></div>
+        <div class="flex justify-between items-center bg-rose-50 rounded-md px-2 py-1.5">
+          <span class="text-rose-700 font-medium text-xs"><i class="fa-solid fa-heart text-xs mr-1"></i>Sodium</span>
+          <span class="text-rose-500 text-xs italic">check label</span>
+        </div>
+        <div class="flex justify-between items-center bg-rose-50 rounded-md px-2 py-1.5">
+          <span class="text-rose-700 font-medium text-xs"><i class="fa-solid fa-heart text-xs mr-1"></i>Phosphorus</span>
+          <span class="text-rose-500 text-xs italic">check label</span>
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">Cardiac targets: sodium &lt;100 mg/100kcal · phosphorus &lt;0.8% dry matter</p>
+    </div>
+
+    <!-- Wet Topper -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-jar text-blue-500"></i>
+        Wet Food Topper
+      </div>
+      <div class="font-semibold text-gray-800 text-sm">Kirkland Signature</div>
+      <div class="text-xs text-gray-500 mb-3">Chicken &amp; Rice Formula (pink can) · optional daily topper</div>
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Calorie Content</div>
+      <div class="space-y-1.5 mb-3 text-sm">
+        <div class="flex justify-between"><span class="text-gray-600">Energy per can</span><span class="font-medium text-gray-800">426 <span class="text-xs text-gray-400">kcal/can</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Energy density</span><span class="font-medium text-gray-800">1,140 <span class="text-xs text-gray-400">kcal/kg</span></span></div>
+      </div>
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Guaranteed Analysis</div>
+      <div class="space-y-1.5 text-sm">
+        <div class="flex justify-between"><span class="text-gray-600">Crude Protein</span><span class="font-medium text-gray-800">9 <span class="text-xs text-gray-400">% min</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Crude Fat</span><span class="font-medium text-gray-800">6 <span class="text-xs text-gray-400">% min</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Crude Fiber</span><span class="font-medium text-gray-800">1.5 <span class="text-xs text-gray-400">% max</span></span></div>
+        <div class="flex justify-between"><span class="text-gray-600">Moisture</span><span class="font-medium text-gray-800">78 <span class="text-xs text-gray-400">% max</span></span></div>
+        <div class="flex justify-between items-center bg-rose-50 rounded-md px-2 py-1.5">
+          <span class="text-rose-700 font-medium text-xs"><i class="fa-solid fa-heart text-xs mr-1"></i>Sodium</span>
+          <span class="text-rose-500 text-xs italic">check label</span>
+        </div>
+        <div class="flex justify-between items-center bg-rose-50 rounded-md px-2 py-1.5">
+          <span class="text-rose-700 font-medium text-xs"><i class="fa-solid fa-heart text-xs mr-1"></i>Phosphorus</span>
+          <span class="text-rose-500 text-xs italic">check label</span>
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">Cardiac targets: sodium &lt;100 mg/100kcal · phosphorus &lt;0.8% dry matter</p>
+    </div>
+
+    <button class="btn-primary" id="vi-save-btn" onclick="saveVetInfo()">
+      <i class="fa-solid fa-floppy-disk mr-2"></i>Save Vet Info
+    </button>
   </div>
+  <!-- end pane-vetinfo -->
 
-  <!-- Dry Kibble -->
-  <div class="card">
-    <div class="card-title" style="color:var(--green)">🥣 Dry Kibble</div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:2px;">Kirkland Signature Adult Dog</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Chicken, Rice &amp; Vegetable Formula · 1 cup/day</div>
-    <div class="nutr-table">
-      <div class="nutr-header">Calorie Content</div>
-      <div class="nutr-row">
-        <span class="nutr-label">Energy</span>
-        <span class="nutr-val">393 <span class="nutr-unit">kcal / cup</span></span>
+  <!-- ───────────────────────────────────── VET NOTES PANE -->
+  <div id="pane-vetnotes" style="display:none;">
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-clipboard-list text-orange-500"></i>
+        New Vet Visit Note
       </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Energy density</span>
-        <span class="nutr-val">3,754 <span class="nutr-unit">kcal / kg</span></span>
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="vn-date">Visit Date</label>
+        <input type="date" id="vn-date" class="form-input">
       </div>
+      <div class="mb-4">
+        <label class="block text-xs font-medium text-gray-500 mb-1" for="vn-text">Notes</label>
+        <textarea id="vn-text" style="min-height:120px;"
+          placeholder="What did the vet say? Any changes to medication, diagnosis updates, next steps..."
+          class="form-input resize-none"></textarea>
+      </div>
+      <button class="btn-primary" id="vn-save-btn" onclick="saveVetNote()">
+        <i class="fa-solid fa-floppy-disk mr-2"></i>Save Note
+      </button>
     </div>
-    <div class="nutr-table" style="margin-top:10px;">
-      <div class="nutr-header">Guaranteed Analysis</div>
-      <div class="nutr-row">
-        <span class="nutr-label">Crude Protein</span>
-        <span class="nutr-val">26 <span class="nutr-unit">% min</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Crude Fat</span>
-        <span class="nutr-val">16 <span class="nutr-unit">% min</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Crude Fiber</span>
-        <span class="nutr-val">4 <span class="nutr-unit">% max</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Moisture</span>
-        <span class="nutr-val">10 <span class="nutr-unit">% max</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Omega-6 Fatty Acids</span>
-        <span class="nutr-val">2.5 <span class="nutr-unit">% min</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Omega-3 Fatty Acids</span>
-        <span class="nutr-val">0.4 <span class="nutr-unit">% min</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Glucosamine</span>
-        <span class="nutr-val">300 <span class="nutr-unit">mg/kg min</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Chondroitin Sulfate</span>
-        <span class="nutr-val">100 <span class="nutr-unit">mg/kg min</span></span>
-      </div>
-      <div class="nutr-row nutr-highlight">
-        <span class="nutr-label">Sodium ❤</span>
-        <span class="nutr-val nutr-missing">check label</span>
-      </div>
-      <div class="nutr-row nutr-highlight">
-        <span class="nutr-label">Phosphorus ❤</span>
-        <span class="nutr-val nutr-missing">check label</span>
-      </div>
-    </div>
-    <div style="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.6;">
-      ❤ Cardiac targets: sodium &lt;100 mg/100kcal · phosphorus &lt;0.8% dry matter
-    </div>
+    <div id="vetnotes-list"></div>
   </div>
+  <!-- end pane-vetnotes -->
 
-  <!-- Wet Topper -->
-  <div class="card">
-    <div class="card-title" style="color:var(--blue)">🥫 Wet Food Topper</div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:2px;">Kirkland Signature</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Chicken &amp; Rice Formula (pink can) · optional daily topper</div>
-    <div class="nutr-table">
-      <div class="nutr-header">Calorie Content (Calculated ME)</div>
-      <div class="nutr-row">
-        <span class="nutr-label">Energy per can</span>
-        <span class="nutr-val">426 <span class="nutr-unit">kcal / can</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Energy density</span>
-        <span class="nutr-val">1,140 <span class="nutr-unit">kcal / kg</span></span>
-      </div>
-    </div>
-    <div class="nutr-table" style="margin-top:10px;">
-      <div class="nutr-header">Guaranteed Analysis</div>
-      <div class="nutr-row">
-        <span class="nutr-label">Crude Protein</span>
-        <span class="nutr-val">9 <span class="nutr-unit">% min</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Crude Fat</span>
-        <span class="nutr-val">6 <span class="nutr-unit">% min</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Crude Fiber</span>
-        <span class="nutr-val">1.5 <span class="nutr-unit">% max</span></span>
-      </div>
-      <div class="nutr-row">
-        <span class="nutr-label">Moisture</span>
-        <span class="nutr-val">78 <span class="nutr-unit">% max</span></span>
-      </div>
-      <div class="nutr-row nutr-highlight">
-        <span class="nutr-label">Sodium ❤</span>
-        <span class="nutr-val nutr-missing">check label</span>
-      </div>
-      <div class="nutr-row nutr-highlight">
-        <span class="nutr-label">Phosphorus ❤</span>
-        <span class="nutr-val nutr-missing">check label</span>
-      </div>
-    </div>
-    <div style="font-size:11px;color:var(--dim);margin-top:10px;line-height:1.6;">
-      ❤ Cardiac targets: sodium &lt;100 mg/100kcal · phosphorus &lt;0.8% dry matter
-    </div>
-  </div>
+  <!-- ───────────────────────────────────── CARE GUIDE PANE -->
+  <div id="pane-careguide" style="display:none;">
 
-  <button class="save-btn" id="vi-save-btn" onclick="saveVetInfo()">Save Vet Info</button>
-</div>
-
-<!-- VET NOTES PANE -->
-<div class="content" id="pane-vetnotes" style="display:none;">
-
-  <div class="card">
-    <div class="card-title" style="color:var(--orange)">📋 New Vet Visit Note</div>
-    <div class="field">
-      <label class="label">Visit Date</label>
-      <input type="date" id="vn-date">
-    </div>
-    <div class="field">
-      <label class="label">Notes</label>
-      <textarea id="vn-text" style="min-height:120px;" placeholder="What did the vet say? Any changes to medication, diagnosis updates, next steps..."></textarea>
-    </div>
-    <button class="save-btn" id="vn-save-btn" onclick="saveVetNote()">Save Note</button>
-  </div>
-
-  <div id="vetnotes-list"></div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     CARE GUIDE PANE
-     ══════════════════════════════════════════════════════ -->
-<div class="content" id="pane-careguide" style="display:none;">
-
-  <!-- Hero intro -->
-  <div class="card" style="border-color:rgba(147,197,253,0.25);background:rgba(147,197,253,0.06);">
-    <div style="display:flex;align-items:flex-start;gap:14px;">
-      <div style="font-size:36px;line-height:1;">🐾</div>
-      <div>
-        <div style="font-size:16px;font-weight:800;margin-bottom:4px;">Gizmo's Care Guide</div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="print-btn" onclick="window.print()">🖨 Print this guide</button>
+    <!-- Hero -->
+    <div class="section-card bg-blue-50 border-blue-100">
+      <div class="flex items-start gap-4">
+        <i class="fa-solid fa-dog text-blue-500 text-4xl mt-1 shrink-0"></i>
+        <div>
+          <h2 class="font-bold text-gray-900 text-lg mb-1">Gizmo's Care Guide</h2>
+          <p class="text-sm text-gray-500 mb-3">Everything you need to care for Gizmo safely.</p>
+          <button onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-blue-300 text-blue-700 text-sm font-medium hover:bg-blue-100 transition-colors">
+            <i class="fa-solid fa-print"></i>Print this guide
+          </button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Emergency contacts — always first -->
-  <div class="card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.07);">
-    <div class="card-title" style="color:var(--red)">🚨 Emergency Contacts</div>
-    <div class="contact-row">
-      <span class="contact-icon">👤</span>
-      <div>
-        <div class="contact-label">Owner</div>
-        <div class="contact-val">Justin Hale</div>
+    <!-- Emergency Contacts -->
+    <div class="section-card bg-red-50 border-red-100">
+      <div class="section-title text-red-700">
+        <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+        Emergency Contacts
       </div>
-      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);">615-681-1614</div>
-    </div>
-    <div class="contact-row">
-      <span class="contact-icon">👤</span>
-      <div>
-        <div class="contact-label">Owner</div>
-        <div class="contact-val">Christina Hale</div>
-      </div>
-      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);">615-870-4431</div>
-    </div>
-    <div class="contact-row">
-      <span class="contact-icon">🏥</span>
-      <div>
-        <div class="contact-label">Primary Vet — Stark Animal Hospital</div>
-        <div class="contact-val">3900 Cleveland Ave NW, Canton, OH</div>
-      </div>
-      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);">330-492-2444</div>
-    </div>
-    <div class="contact-row">
-      <span class="contact-icon">🚑</span>
-      <div>
-        <div class="contact-label">24hr Emergency — Stark County Veterinary Emergency</div>
-        <div class="contact-val">4303 Whipple Ave NW, Canton, OH</div>
-      </div>
-      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--red);">330-452-5116</div>
-    </div>
-    <div class="contact-row">
-      <span class="contact-icon">❤️</span>
-      <div>
-        <div class="contact-label">Cardiologist — Metropolitan Veterinary Hospital</div>
-        <div class="contact-val">Referred for echocardiogram</div>
-      </div>
-      <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);">330-666-2976</div>
-    </div>
-  </div>
-
-  <!-- Daily schedule timeline -->
-  <div class="card">
-    <div class="card-title" style="color:var(--blue)">🕐 Daily Schedule</div>
-    <div style="font-size:12px;color:var(--pink);margin-bottom:16px;font-family:'DM Mono',monospace;">Pimobendan must be given 1 hour BEFORE food — timing matters for his heart.</div>
-    <div class="timeline">
-
-      <div class="timeline-item">
-        <div class="timeline-dot dot-pink"></div>
-        <div class="tl-time">ANYTIME · WHILE HE'S SLEEPING</div>
-        <div class="tl-title" style="color:var(--pink)">🫁 Check Resting Respiratory Rate (once daily)</div>
-        <div class="tl-body">
-          Catch him sleeping whenever you can and count his breaths. Count for 30 seconds, multiply by 2.
-          <strong>Under 30 = normal.</strong> If it's 40+ call Justin. <strong>Over 60+, call ER immediately.</strong>
-          See the full how-to section below.
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-user text-gray-400 w-5 text-center text-sm"></i>
+            <div><div class="text-xs text-gray-400">Owner</div><div class="text-sm font-semibold text-gray-800">Justin Hale</div></div>
+          </div>
+          <a href="tel:6156811614" class="font-mono text-sm text-blue-600 font-semibold">615-681-1614</a>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-user text-gray-400 w-5 text-center text-sm"></i>
+            <div><div class="text-xs text-gray-400">Owner</div><div class="text-sm font-semibold text-gray-800">Christina Hale</div></div>
+          </div>
+          <a href="tel:6158704431" class="font-mono text-sm text-blue-600 font-semibold">615-870-4431</a>
+        </div>
+        <div class="border-t border-red-200 pt-3 flex items-start justify-between gap-2">
+          <div class="flex items-start gap-3">
+            <i class="fa-solid fa-hospital text-gray-400 w-5 text-center text-sm mt-0.5"></i>
+            <div>
+              <div class="text-xs text-gray-400">Primary Vet</div>
+              <div class="text-sm font-semibold text-gray-800">Stark Animal Hospital</div>
+              <div class="text-xs text-gray-400">3900 Cleveland Ave NW, Canton, OH</div>
+            </div>
+          </div>
+          <a href="tel:3304922444" class="font-mono text-sm text-gray-600 font-semibold shrink-0">330-492-2444</a>
+        </div>
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-3">
+            <i class="fa-solid fa-truck-medical text-red-500 w-5 text-center text-sm mt-0.5"></i>
+            <div>
+              <div class="text-xs text-red-600 font-semibold">24hr Emergency</div>
+              <div class="text-sm font-semibold text-gray-800">Stark County Veterinary Emergency</div>
+              <div class="text-xs text-gray-400">4303 Whipple Ave NW, Canton, OH</div>
+            </div>
+          </div>
+          <a href="tel:3304525116" class="font-mono text-sm text-red-600 font-bold shrink-0">330-452-5116</a>
+        </div>
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-start gap-3">
+            <i class="fa-solid fa-heart-pulse text-rose-500 w-5 text-center text-sm mt-0.5"></i>
+            <div>
+              <div class="text-xs text-gray-400">Cardiologist</div>
+              <div class="text-sm font-semibold text-gray-800">Metropolitan Veterinary Hospital</div>
+              <div class="text-xs text-gray-400">Referred for echocardiogram</div>
+            </div>
+          </div>
+          <a href="tel:3306662976" class="font-mono text-sm text-gray-600 font-semibold shrink-0">330-666-2976</a>
         </div>
       </div>
+    </div>
 
-      <div class="timeline-item">
-        <div class="timeline-dot dot-yellow"></div>
-        <div class="tl-time">~10:00 AM · BEFORE BREAKFAST</div>
-        <div class="tl-title" style="color:var(--yellow)">💊 Morning Pimobendan (on empty stomach)</div>
-        <div class="tl-body">
-          Give <strong>Pimobendan only</strong> in a small piece of bread. This must be given <strong>1 hour before his meal</strong> on an empty stomach.
-          Use a small piece of bread to cover the pill. He'll eat it easily.
+    <!-- Daily Schedule -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-clock text-blue-500"></i>
+        Daily Schedule
+      </div>
+      <div class="alert-info mb-4 text-xs">
+        <i class="fa-solid fa-triangle-exclamation shrink-0"></i>
+        All medications are given together, but Pimobendan must still be given 1 hour BEFORE food — timing matters for his heart.
+      </div>
+      <div class="space-y-0">
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center shrink-0">
+            <div class="w-3 h-3 rounded-full bg-rose-400 mt-1"></div>
+            <div class="w-px flex-1 bg-gray-200 mt-1 mb-0"></div>
+          </div>
+          <div class="pb-5">
+            <div class="text-xs font-semibold text-rose-500 uppercase tracking-wide mb-1">Anytime · While he's sleeping</div>
+            <div class="font-semibold text-gray-800 text-sm mb-1"><i class="fa-solid fa-lungs mr-1.5 text-rose-400"></i>Check Resting Respiratory Rate (once daily)</div>
+            <p class="text-sm text-gray-600 leading-relaxed">Catch him sleeping and count his breaths for 30 seconds × 2. <strong>Under 30 = normal.</strong> If 40+ call Justin. <strong>Over 40+ = ER immediately.</strong></p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center shrink-0">
+            <div class="w-3 h-3 rounded-full bg-yellow-400 mt-1"></div>
+            <div class="w-px flex-1 bg-gray-200 mt-1"></div>
+          </div>
+          <div class="pb-5">
+            <div class="text-xs font-semibold text-yellow-600 uppercase tracking-wide mb-1">~8–9 AM · On empty stomach</div>
+            <div class="font-semibold text-gray-800 text-sm mb-1"><i class="fa-solid fa-pills mr-1.5 text-yellow-500"></i>All Morning Medications</div>
+            <p class="text-sm text-gray-600 leading-relaxed">Give <strong>Pimobendan, Enalapril, and Furosemide</strong> together, hidden in a small piece of bread or treat. <strong>Do not feed his meal yet</strong> — Pimobendan requires an empty stomach and 1 hour before food.</p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center shrink-0">
+            <div class="w-3 h-3 rounded-full bg-emerald-400 mt-1"></div>
+            <div class="w-px flex-1 bg-gray-200 mt-1"></div>
+          </div>
+          <div class="pb-5">
+            <div class="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-1">~9–10 AM · One hour after medications</div>
+            <div class="font-semibold text-gray-800 text-sm mb-1"><i class="fa-solid fa-utensils mr-1.5 text-emerald-500"></i>Morning Meal</div>
+            <p class="text-sm text-gray-600 leading-relaxed">Scoop <strong>1/2 cup of pre-soaked kibble</strong> from the jar. Add <strong>2 spoons of Kirkland wet food (pink can)</strong> on top. <strong>Fresh water must always be available.</strong></p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center shrink-0">
+            <div class="w-3 h-3 rounded-full bg-yellow-400 mt-1"></div>
+            <div class="w-px flex-1 bg-gray-200 mt-1"></div>
+          </div>
+          <div class="pb-5">
+            <div class="text-xs font-semibold text-yellow-600 uppercase tracking-wide mb-1">~8–9 PM · On empty stomach</div>
+            <div class="font-semibold text-gray-800 text-sm mb-1"><i class="fa-solid fa-pills mr-1.5 text-yellow-500"></i>All Evening Medications</div>
+            <p class="text-sm text-gray-600 leading-relaxed">Give <strong>Pimobendan and Furosemide</strong> together the same way as morning. <strong>Wait 1 hour before his evening meal.</strong></p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center shrink-0">
+            <div class="w-3 h-3 rounded-full bg-orange-400 mt-1"></div>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-1">~9–10 PM · One hour after medications</div>
+            <div class="font-semibold text-gray-800 text-sm mb-1"><i class="fa-solid fa-utensils mr-1.5 text-orange-400"></i>Evening Meal</div>
+            <p class="text-sm text-gray-600 leading-relaxed">Same as morning — <strong>1/2 cup pre-soaked kibble</strong> with <strong>2 spoons wet food topper</strong>. Refrigerate unused wet food.</p>
+          </div>
         </div>
       </div>
-
-      <div class="timeline-item">
-        <div class="timeline-dot dot-green"></div>
-        <div class="tl-time">~11:00 AM · ONE HOUR AFTER PIMOBENDAN</div>
-        <div class="tl-title" style="color:var(--green)">🍗 Morning Meal + Remaining Meds</div>
-        <div class="tl-body">
-          Scoop <strong>1/2 cup of pre-soaked kibble</strong> from the jar (food was soaked overnight — see prep below).
-          Add <strong>2 spoons of Kirkland wet food (pink can)</strong> on top.
-          Give <strong>Enalapril</strong> and <strong>Furosemide</strong> hidden in food or a small treat alongside this meal.
-          <strong>Fresh water must always be available.</strong>
-        </div>
-      </div>
-
-      <div class="timeline-item">
-        <div class="timeline-dot dot-yellow"></div>
-        <div class="tl-time">~10:00 PM · BEFORE DINNER</div>
-        <div class="tl-title" style="color:var(--yellow)">💊 Evening Pimobendan (on empty stomach)</div>
-        <div class="tl-body">
-          Give <strong>Pimobendan only</strong> again in a small piece of bread, <strong>1 hour before dinner.</strong>
-          Same bread method as morning.
-        </div>
-      </div>
-
-      <div class="timeline-item">
-        <div class="timeline-dot dot-orange"></div>
-        <div class="tl-time">~11:00 PM · ONE HOUR AFTER PIMOBENDAN</div>
-        <div class="tl-title" style="color:var(--orange)">🍗 Evening Meal + Furosemide</div>
-        <div class="tl-body">
-          Same as morning — <strong>1/2 cup pre-soaked kibble</strong> with <strong>2 spoons wet food topper</strong>.
-          Give <strong>Furosemide</strong> alongside this meal. Refrigerate unused wet food.
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- How to measure RR -->
-  <div class="card">
-    <div class="card-title" style="color:var(--pink)">🫁 How to Check Breathing Rate</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
-      Do this <strong>once per day</strong> — whenever you catch him sleeping. You don't need a set time, just take the opportunity when he's down. This is the single most important monitoring task because dogs hide illness and the breathing rate catches problems early.
-    </div>
-    <ol class="step-list">
-      <li><div class="step-num">1</div><div>Wait until Gizmo is <strong>fully asleep or resting quietly</strong> (not panting, not moving).</div></li>
-      <li><div class="step-num">2</div><div>Watch his chest or belly rise and fall. Each rise-and-fall = <strong>one breath</strong>.</div></li>
-      <li><div class="step-num">3</div><div>Count breaths for exactly <strong>30 seconds</strong>.</div></li>
-      <li><div class="step-num">4</div><div><strong>Multiply by 2</strong> to get breaths per minute.</div></li>
-      <li><div class="step-num">5</div><div>
-        <strong style="color:var(--green)">Under 30 = Normal ✓</strong><br>
-        <strong style="color:var(--yellow)">40+ = Call Justin/Christina immediately</strong><br>
-        <strong style="color:var(--red)">Over 60 = Call ER immediately</strong>
-      </div></li>
-    </ol>
-  </div>
-
-  <!-- Medications detail -->
-  <div class="card">
-    <div class="card-title" style="color:var(--purple)">💊 Medication Details</div>
-    <div style="font-size:12px;color:var(--dim);margin-bottom:14px;font-family:'DM Mono',monospace;">All three meds are required every day — do not skip. Do not double up if you miss a dose.</div>
-
-    <div class="pill-row">
-      <div class="pill-icon">🫀</div>
-      <div style="flex:1;">
-        <div class="pill-name">Pimobendan</div>
-        <div class="pill-detail">
-          Strengthens heart muscle. <strong>Must be given 1 hour before food on an empty stomach.</strong>
-          Give in a small piece of plain bread only. Use the "fake-out" method: plain treat → pill treat → plain treat.
-        </div>
-      </div>
-      <div class="pill-timing">
-        <div><span class="pill-time-badge time-am">~10 AM</span></div>
-        <div><span class="pill-time-badge time-pm">~10 PM</span></div>
-      </div>
     </div>
 
-    <div class="pill-row">
-      <div class="pill-icon">💙</div>
-      <div style="flex:1;">
-        <div class="pill-name">Enalapril</div>
-        <div class="pill-detail">
-          Reduces heart workload. <strong>Once daily with the morning meal.</strong>
-          Give alongside Furosemide at the 11 AM feeding. No special food timing needed.
-        </div>
+    <!-- How to Check Breathing Rate -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-lungs text-rose-500"></i>
+        How to Check Breathing Rate
       </div>
-      <div class="pill-timing">
-        <div><span class="pill-time-badge time-daily">~11 AM only</span></div>
-      </div>
-    </div>
-
-    <div class="pill-row">
-      <div class="pill-icon">💧</div>
-      <div style="flex:1;">
-        <div class="pill-name">Furosemide</div>
-        <div class="pill-detail">
-          Water pill — helps remove fluid from lungs. <strong>Twice daily, given with meals.</strong>
-          He will need to urinate more than a normal dog — this is expected.
-          He may make multiple attempts before producing a full stream. <strong>Always keep fresh water available.</strong>
-        </div>
-      </div>
-      <div class="pill-timing">
-        <div><span class="pill-time-badge time-am">~11 AM</span></div>
-        <div><span class="pill-time-badge time-pm">~11 PM</span></div>
-      </div>
-    </div>
-
-    <div class="warn-box warn-box-warn" style="margin-top:14px;margin-bottom:0;">
-      <div class="warn-icon">⚠️</div>
-      <div>
-        <div class="warn-title">Missed Dose Protocol</div>
-        <div class="warn-body">If you realize you missed a dose and it's been less than a few hours, give it then. If the next dose is coming up soon, <strong>skip the missed dose</strong>. Never give two doses at once.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Feeding guide -->
-  <div class="card">
-    <div class="card-title" style="color:var(--green)">🥣 Feeding Guide</div>
-
-    <div style="font-size:12px;color:var(--dim);margin-bottom:12px;line-height:1.6;">
-      Two meals per day. Food is soaked in a jar overnight — just scoop and serve.
-    </div>
-
-    <div class="food-row">
-      <div class="food-icon">🥣</div>
-      <div>
-        <div class="food-name">Kirkland Dry Kibble (pre-soaked)</div>
-        <div class="food-detail">Red bag · Chicken, Rice &amp; Vegetable · soaked overnight in plain water</div>
-      </div>
-      <div class="food-amount">1/2 cup<br><span style="font-size:10px;color:var(--dim)">per meal × 2</span></div>
-    </div>
-
-    <div class="food-row">
-      <div class="food-icon">🥫</div>
-      <div>
-        <div class="food-name">Kirkland Wet Food (topper)</div>
-        <div class="food-detail">Pink can · Chicken &amp; Rice · added on top of soaked kibble</div>
-      </div>
-      <div class="food-amount">2 spoons<br><span style="font-size:10px;color:var(--dim)">per meal × 2</span></div>
-    </div>
-
-    <div style="margin-top:14px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;font-family:'DM Mono',monospace;">Prep method</div>
-      <ol class="step-list">
-        <li><div class="step-num">1</div><div>The night before: measure <strong>1 cup of dry kibble</strong> into a mason jar, add enough <strong>plain water</strong> to cover, and leave it in the fridge overnight to soak. <strong>No broth, no stock</strong> — high sodium is dangerous for his heart.</div></li>
-        <li><div class="step-num">2</div><div>At mealtime, scoop out <strong>1/2 cup of the soaked kibble</strong> into his bowl.</div></li>
-        <li><div class="step-num">3</div><div>Add <strong>2 spoons of Kirkland wet food (pink can)</strong> on top.</div></li>
-        <li><div class="step-num">4</div><div>Serve at room temperature. Keep the jar and any open wet food cans refrigerated.</div></li>
+      <p class="text-sm text-gray-500 mb-4 leading-relaxed">Do this <strong>once per day</strong> whenever you catch him sleeping. The single most important monitoring task.</p>
+      <ol class="space-y-3">
+        <li class="flex gap-3 text-sm">
+          <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+          <span class="text-gray-700">Wait until Gizmo is <strong>fully asleep or resting quietly</strong> (not panting, not moving).</span>
+        </li>
+        <li class="flex gap-3 text-sm">
+          <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+          <span class="text-gray-700">Watch his chest or belly rise and fall. Each rise-and-fall = <strong>one breath</strong>.</span>
+        </li>
+        <li class="flex gap-3 text-sm">
+          <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+          <span class="text-gray-700">Count breaths for exactly <strong>30 seconds</strong>.</span>
+        </li>
+        <li class="flex gap-3 text-sm">
+          <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+          <span class="text-gray-700"><strong>Multiply by 2</strong> to get breaths per minute.</span>
+        </li>
+        <li class="flex gap-3 text-sm">
+          <span class="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">5</span>
+          <div class="space-y-0.5">
+            <div class="font-semibold text-green-700">Under 30 = Normal</div>
+            <div class="font-semibold text-yellow-600">30–40 = Call Justin/Christina</div>
+            <div class="font-semibold text-red-600">Over 40 = Go to ER immediately</div>
+          </div>
+        </li>
       </ol>
     </div>
 
-    <div style="margin-top:14px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;font-family:'DM Mono',monospace;">Safe treats</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Plain boiled chicken</span>
-        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Plain scrambled eggs</span>
-        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Baby carrots</span>
-        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Blueberries</span>
-        <span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(134,239,172,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✓ Plain pumpkin</span>
-        <span style="background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✗ Deli meats</span>
-        <span style="background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✗ Anything grain-free</span>
-        <span style="background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✗ High-sodium treats</span>
-        <span style="background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,0.25);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;">✗ Xylitol — toxic</span>
+    <!-- Medication Details -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-pills text-violet-500"></i>
+        Medication Details
+      </div>
+      <p class="text-xs text-gray-400 mb-4">All three meds are given together before meals. Never skip. Never double up if you miss a dose.</p>
+      <div class="space-y-3 mb-4">
+        <div class="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
+          <i class="fa-solid fa-heart-pulse text-rose-500 text-lg mt-0.5 shrink-0"></i>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-gray-900 text-sm">Pimobendan</div>
+            <div class="text-xs text-gray-600 mt-1 leading-relaxed">Strengthens heart muscle. <strong>Must be given on an empty stomach — wait 1 full hour before feeding.</strong> Give hidden in a small piece of plain bread alongside the other meds.</div>
+          </div>
+          <div class="text-right shrink-0 space-y-1">
+            <div><span class="inline-block px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full font-semibold">~8–9 AM</span></div>
+            <div><span class="inline-block px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-semibold">~8–9 PM</span></div>
+          </div>
+        </div>
+        <div class="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
+          <i class="fa-solid fa-droplet text-blue-500 text-lg mt-0.5 shrink-0"></i>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-gray-900 text-sm">Enalapril</div>
+            <div class="text-xs text-gray-600 mt-1 leading-relaxed">Reduces heart workload. <strong>Once daily — give with the morning medications (~8–9 AM).</strong> No special food timing required beyond the Pimobendan wait.</div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="inline-block px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full font-semibold">~8–9 AM</span>
+          </div>
+        </div>
+        <div class="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
+          <i class="fa-solid fa-circle-dot text-cyan-500 text-lg mt-0.5 shrink-0"></i>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-gray-900 text-sm">Furosemide</div>
+            <div class="text-xs text-gray-600 mt-1 leading-relaxed">Water pill — removes fluid from lungs. <strong>Twice daily, given with the morning and evening medications.</strong> He will urinate more than normal — this is expected. Always keep fresh water available.</div>
+          </div>
+          <div class="text-right shrink-0 space-y-1">
+            <div><span class="inline-block px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full font-semibold">~8–9 AM</span></div>
+            <div><span class="inline-block px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-semibold">~8–9 PM</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="alert-warn">
+        <i class="fa-solid fa-triangle-exclamation shrink-0"></i>
+        <div><strong>Missed Dose:</strong> If less than a few hours have passed, give it. If the next dose is coming soon, skip it. Never give two doses at once.</div>
       </div>
     </div>
-  </div>
 
-  <!-- What's normal for Gizmo -->
-  <div class="card">
-    <div class="card-title" style="color:var(--blue)">🩺 What's Normal for Gizmo</div>
-    <div style="font-size:12px;color:var(--dim);margin-bottom:14px;">Don't be alarmed by these — they're expected given his condition and medications.</div>
-
-    <div class="warn-box warn-box-ok" style="margin-bottom:8px;">
-      <div class="warn-icon">💧</div>
-      <div>
-        <div class="warn-title">Frequent or unusual urination</div>
-        <div class="warn-body">He takes a diuretic (water pill) which empties his bladder. He may try to mark several dry spots before producing a strong stream. <strong>This is normal.</strong> Always keep fresh water available.</div>
+    <!-- Feeding Guide -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-bowl-food text-emerald-500"></i>
+        Feeding Guide
+      </div>
+      <p class="text-sm text-gray-500 mb-4">Two meals per day. Food is soaked in a jar overnight — just scoop and serve.</p>
+      <div class="space-y-2 mb-4">
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
+          <i class="fa-solid fa-bowl-food text-emerald-500 text-xl shrink-0"></i>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-sm text-gray-800">Kirkland Dry Kibble (pre-soaked)</div>
+            <div class="text-xs text-gray-500">Red bag · Chicken, Rice &amp; Vegetable · soaked overnight in plain water</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-bold text-gray-800 text-sm">1/2 cup</div>
+            <div class="text-xs text-gray-400">per meal × 2</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
+          <i class="fa-solid fa-jar text-blue-500 text-xl shrink-0"></i>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-sm text-gray-800">Kirkland Wet Food (topper)</div>
+            <div class="text-xs text-gray-500">Pink can · Chicken &amp; Rice · added on top of soaked kibble</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-bold text-gray-800 text-sm">2 spoons</div>
+            <div class="text-xs text-gray-400">per meal × 2</div>
+          </div>
+        </div>
+      </div>
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Prep Method</div>
+      <ol class="space-y-2 mb-4">
+        <li class="flex gap-3 text-sm text-gray-700">
+          <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+          <span>Night before: <strong>1 cup dry kibble</strong> in a mason jar, add <strong>plain water</strong> to cover. Refrigerate overnight. <strong>No broth or stock</strong> — high sodium is dangerous.</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-700">
+          <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+          <span>At mealtime, scoop <strong>1/2 cup soaked kibble</strong> into his bowl.</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-700">
+          <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+          <span>Add <strong>2 spoons Kirkland wet food (pink can)</strong> on top.</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-700">
+          <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+          <span>Serve at room temperature. Refrigerate the jar and open wet food cans.</span>
+        </li>
+      </ol>
+      <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Safe &amp; Unsafe Treats</div>
+      <div class="flex flex-wrap gap-1.5">
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200"><i class="fa-solid fa-check text-xs"></i>Plain boiled chicken</span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200"><i class="fa-solid fa-check text-xs"></i>Plain scrambled eggs</span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200"><i class="fa-solid fa-check text-xs"></i>Baby carrots</span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200"><i class="fa-solid fa-check text-xs"></i>Blueberries</span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200"><i class="fa-solid fa-check text-xs"></i>Plain pumpkin</span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold border border-red-200"><i class="fa-solid fa-xmark text-xs"></i>Deli meats</span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold border border-red-200"><i class="fa-solid fa-xmark text-xs"></i>Grain-free food</span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold border border-red-200"><i class="fa-solid fa-xmark text-xs"></i>High-sodium treats</span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold border border-red-200"><i class="fa-solid fa-xmark text-xs"></i>Xylitol — toxic</span>
       </div>
     </div>
 
-    <div class="warn-box warn-box-ok" style="margin-bottom:8px;">
-      <div class="warn-icon">😴</div>
-      <div>
-        <div class="warn-title">Resting more than a young dog</div>
-        <div class="warn-body">Normal for his age and condition. Good days = interested in food, alert, wants interaction. Bad days = very lethargic, not interested in food. Call Justin/Christina if you see a bad day.</div>
+    <!-- What's Normal -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-circle-info text-blue-500"></i>
+        What's Normal for Gizmo
       </div>
-    </div>
-
-    <div class="warn-box warn-box-warn">
-      <div class="warn-icon">⚠️</div>
-      <div>
-        <div class="warn-title">Call Justin/Christina if you notice:</div>
-        <div class="warn-body">
-          <strong>Resting breathing rate 30–35/min · Gums pale pink · Refusing food for more than one meal ·
-          Straining or whimpering when urinating · Blood in urine · Noticeably less energy than the day before</strong>
+      <p class="text-sm text-gray-500 mb-3">Don't be alarmed by these — expected given his condition and medications.</p>
+      <div class="space-y-3">
+        <div class="flex gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
+          <i class="fa-solid fa-droplet text-blue-500 shrink-0 mt-0.5"></i>
+          <div>
+            <div class="font-semibold text-sm text-gray-800">Frequent or unusual urination</div>
+            <p class="text-xs text-gray-600 mt-1 leading-relaxed">He takes a diuretic which empties his bladder. He may try to mark several dry spots before producing a stream. <strong>This is normal.</strong> Always keep fresh water available.</p>
+          </div>
+        </div>
+        <div class="flex gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
+          <i class="fa-solid fa-moon text-blue-500 shrink-0 mt-0.5"></i>
+          <div>
+            <div class="font-semibold text-sm text-gray-800">Resting more than a young dog</div>
+            <p class="text-xs text-gray-600 mt-1 leading-relaxed">Normal for his age and condition. Good days = interested in food, alert, wants interaction. Bad days = very lethargic, not interested in food. Call Justin/Christina if you see a bad day.</p>
+          </div>
+        </div>
+        <div class="flex gap-3 p-3 rounded-lg bg-yellow-50 border border-yellow-100">
+          <i class="fa-solid fa-triangle-exclamation text-yellow-600 shrink-0 mt-0.5"></i>
+          <div>
+            <div class="font-semibold text-sm text-gray-800">Call Justin/Christina if you notice:</div>
+            <p class="text-xs text-gray-700 mt-1 leading-relaxed"><strong>Resting breathing rate 30–35/min</strong> · <strong>Gums pale pink</strong> · Refusing food for more than one meal · Straining when urinating · Blood in urine · Noticeably less energy</p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Emergency signs -->
-  <div class="card">
-    <div class="card-title" style="color:var(--red)">🚨 Go to the ER Immediately If You See:</div>
-    <div class="warn-box warn-box-danger" style="margin-bottom:8px;">
-      <div class="warn-icon">😮‍💨</div>
-      <div>
-        <div class="warn-title">Labored or rapid breathing at rest</div>
-        <div class="warn-body">Count breaths for 30 seconds × 2. <strong>Over 60 breaths/min = call ER now.</strong> Over 40 = call vet ASAP.</div>
+    <!-- ER Signs -->
+    <div class="section-card bg-red-50 border-red-100">
+      <div class="section-title text-red-700">
+        <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+        Go to the ER Immediately If You See:
+      </div>
+      <div class="space-y-2">
+        <div class="flex gap-3 p-3 rounded-lg bg-red-100 border border-red-200">
+          <i class="fa-solid fa-face-dizzy text-red-600 shrink-0 mt-0.5"></i>
+          <div>
+            <div class="font-semibold text-sm text-red-800">Labored or rapid breathing at rest</div>
+            <p class="text-xs text-red-700 mt-1">Count breaths × 2. <strong>Over 40 = call ER now.</strong></p>
+          </div>
+        </div>
+        <div class="flex gap-3 p-3 rounded-lg bg-red-100 border border-red-200">
+          <i class="fa-solid fa-tooth text-red-600 shrink-0 mt-0.5"></i>
+          <div>
+            <div class="font-semibold text-sm text-red-800">Blue, gray, or white gums</div>
+            <p class="text-xs text-red-700 mt-1">Gums should be <strong>pink and moist</strong>. Any other color = call ER now.</p>
+          </div>
+        </div>
+        <div class="flex gap-3 p-3 rounded-lg bg-red-100 border border-red-200">
+          <i class="fa-solid fa-person-falling text-red-600 shrink-0 mt-0.5"></i>
+          <div>
+            <div class="font-semibold text-sm text-red-800">Collapse or inability to stand</div>
+            <p class="text-xs text-red-700 mt-1">He has had collapse episodes before. <strong>Do not wait. Call ER now.</strong></p>
+          </div>
+        </div>
+        <div class="flex gap-3 p-3 rounded-lg bg-red-100 border border-red-200">
+          <i class="fa-solid fa-wind text-red-600 shrink-0 mt-0.5"></i>
+          <div>
+            <div class="font-semibold text-sm text-red-800">Coughing up foam or fluid</div>
+            <p class="text-xs text-red-700 mt-1">Indicates fluid in the lungs. <strong>Call ER now.</strong></p>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="warn-box warn-box-danger" style="margin-bottom:8px;">
-      <div class="warn-icon">🦷</div>
-      <div>
-        <div class="warn-title">Blue, gray, or white gums</div>
-        <div class="warn-body">Lift his lip and look at his gums. They should be <strong>pink and moist</strong>. Any other color = call ER now.</div>
+
+    <!-- Activity -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-person-running text-orange-500"></i>
+        Activity &amp; Handling
       </div>
+      <ul class="space-y-2.5">
+        <li class="flex gap-3 text-sm text-gray-700">
+          <i class="fa-solid fa-circle-check text-green-500 shrink-0 mt-0.5"></i>
+          <span><strong>He can roam the yard on his own</strong> — he knows his limits. No leash needed for bathroom trips.</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-700">
+          <i class="fa-solid fa-circle-check text-green-500 shrink-0 mt-0.5"></i>
+          <span><strong>Keep calm and quiet</strong> — stress can trigger episodes. Low-key cuddle time is perfect.</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-700">
+          <i class="fa-solid fa-circle-check text-green-500 shrink-0 mt-0.5"></i>
+          <span><strong>No rough play</strong> — gentle interaction only. No wrestling or intense running.</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-700">
+          <i class="fa-solid fa-circle-check text-green-500 shrink-0 mt-0.5"></i>
+          <span><strong>Watch for overexertion</strong> — if he pants heavily after mild activity, let him rest immediately.</span>
+        </li>
+        <li class="flex gap-3 text-sm text-gray-700">
+          <i class="fa-solid fa-circle-check text-green-500 shrink-0 mt-0.5"></i>
+          <span><strong>Comfortable temperature</strong> — avoid excessive heat or cold. Small dogs with heart conditions are more sensitive.</span>
+        </li>
+      </ul>
     </div>
-    <div class="warn-box warn-box-danger" style="margin-bottom:8px;">
-      <div class="warn-icon">⚡</div>
-      <div>
-        <div class="warn-title">Collapse or inability to stand</div>
-        <div class="warn-body">He has had collapse episodes before. <strong>Do not wait.</strong> Call ER now.</div>
+
+    <!-- About Gizmo -->
+    <div class="section-card bg-emerald-50 border-emerald-100">
+      <div class="section-title text-emerald-700">
+        <i class="fa-solid fa-heart text-emerald-500"></i>
+        About Gizmo
       </div>
+      <p class="text-sm text-gray-600 leading-relaxed">
+        Gizmo is a tough little guy who has been through a lot — he was recently hospitalized and is on a recovery path.
+        <strong class="text-gray-800">Good signs</strong>: interested in food, wants attention, curious about his surroundings, comfortable breathing at rest.
+        He loves his routine and does best with calm, consistent care.
+      </p>
+      <p class="text-sm text-gray-600 leading-relaxed mt-3">
+        If something seems off and you're not sure — <strong class="text-gray-800">call Justin/Christina first</strong>.
+        It's never a bother. Gizmo is very much loved and his family trusts you with his care.
+      </p>
     </div>
-    <div class="warn-box warn-box-danger">
-      <div class="warn-icon">🫧</div>
-      <div>
-        <div class="warn-title">Coughing up foam or fluid</div>
-        <div class="warn-body">This indicates fluid in the lungs. <strong>call ER now.</strong></div>
+
+  </div>
+  <!-- end pane-careguide -->
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════ SETTINGS MODAL -->
+<div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style="display:none;">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-lg font-bold text-gray-900">
+          <i class="fa-solid fa-cloud mr-2 text-blue-500"></i>Cloud Sync Setup
+        </h2>
+        <button onclick="closeSettings()" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-sm text-gray-500 mb-5">Store entries in a GitHub Gist so history syncs across any device. Anyone with the share link can view — no login needed to read.</p>
+
+      <div class="mb-4">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Step 1 — GitHub Token (stays on this device)</div>
+        <input type="password" id="cfg-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" class="form-input mb-2">
+        <p class="text-xs text-gray-400 leading-relaxed">Create at <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong>. Select <strong>gist</strong> scope only.</p>
+      </div>
+
+      <div class="mb-4">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Step 2 — Gist Storage</div>
+        <div id="gist-no-id">
+          <button class="btn-primary mb-2" onclick="handleCreateGist()">
+            <i class="fa-solid fa-plus mr-1.5"></i>Create new Gist for Gizmo's data
+          </button>
+          <div class="text-center text-xs text-gray-400 mb-2">— or link an existing Gist —</div>
+          <div class="flex gap-2">
+            <input type="text" id="cfg-gist-id" placeholder="Gist ID (32-char hex string)" class="form-input flex-1">
+            <button class="btn-secondary shrink-0" onclick="handleLinkGist()">Link</button>
+          </div>
+        </div>
+        <div id="gist-has-id" style="display:none;">
+          <div class="alert-info mb-3">
+            <i class="fa-solid fa-circle-check shrink-0"></i>
+            <span>Gist linked: <span id="gist-id-display" class="font-mono text-xs break-all"></span></span>
+          </div>
+          <button class="btn-danger" onclick="handleUnlinkGist()">
+            <i class="fa-solid fa-link-slash mr-1.5"></i>Unlink Gist
+          </button>
+        </div>
+        <p id="gist-msg" class="text-sm mt-2"></p>
+      </div>
+
+      <div id="share-section" style="display:none;" class="mb-4">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Share Link (read-only for anyone)</div>
+        <div id="share-link-box" class="bg-gray-50 border border-gray-200 rounded-lg p-3 font-mono text-xs text-gray-600 break-all mb-2"></div>
+        <button class="btn-secondary w-full" onclick="copyShareLink()">
+          <i class="fa-solid fa-copy mr-1.5"></i>Copy share link
+        </button>
+        <p id="copy-msg" class="text-xs text-center mt-1 text-green-600"></p>
+      </div>
+
+      <div class="flex gap-2 pt-4 border-t border-gray-100">
+        <button class="btn-primary flex-1" onclick="saveSettings()">Save Settings</button>
+        <button class="btn-secondary" onclick="closeSettings()">Close</button>
       </div>
     </div>
   </div>
-
-  <!-- Activity & handling -->
-  <div class="card">
-    <div class="card-title" style="color:var(--orange)">🏃 Activity & Handling</div>
-    <ol class="step-list">
-      <li><div class="step-num">✓</div><div><strong>He can roam the yard on his own</strong> — he knows his limits. Let him go out as he normally would. No need for a leash for bathroom trips.</div></li>
-      <li><div class="step-num">✓</div><div><strong>Keep calm and quiet</strong> — stress can trigger episodes. Low-key cuddle time is perfect for him.</div></li>
-      <li><div class="step-num">✓</div><div><strong>No rough play</strong> with the Jack Russell Terrier that is too intense for Gizmo. Gentle interaction is fine.</div></li>
-      <li><div class="step-num">✓</div><div><strong>Watch for overexertion</strong> — if he starts panting heavily during or after mild activity, let him rest immediately.</div></li>
-      <li><div class="step-num">✓</div><div><strong>Comfortable temperature</strong> — no excessive heat or cold. Small dogs with heart conditions are more sensitive.</div></li>
-    </ol>
-  </div>
-
-  <!-- A note on his personality -->
-  <div class="card" style="border-color:rgba(134,239,172,0.2);background:rgba(134,239,172,0.05);">
-    <div class="card-title" style="color:var(--green)">💚 About Gizmo</div>
-    <div style="font-size:13px;color:var(--muted);line-height:1.7;">
-      Gizmo is a tough little guy who has been through a lot — he was recently hospitalized and is on a recovery path.
-      <strong style="color:var(--text)">Good signs</strong>: interested in food, wants attention, curious about his surroundings, comfortable breathing at rest.
-      He loves his routine and does best with calm, consistent care.
-      <br><br>
-      If something seems off and you're not sure — <strong style="color:var(--text)">call Justin/Christina first</strong>.
-      It's never a bother. Gizmo is very much loved and his family trusts you with his care.
-    </div>
-  </div>
-
 </div>
-<!-- end pane-careguide -->
 
-<script src="app.js"></script>
 </body>
 </html>
