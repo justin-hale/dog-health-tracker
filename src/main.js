@@ -43,6 +43,18 @@ const DEFAULT_VET_INFO = {
   vetNotes: [],
 }
 
+const DEFAULT_ENTRY = {
+  breathing_quality: 'Normal',
+  appetite:          'Great — ate everything',
+  water_intake:      'Normal',
+  wet_topper:        true,
+  urine_color:       'Clear / pale yellow',
+  urination_quality: 'Normal stream',
+  straining:         'None',
+  energy:            'Normal for Gizmo',
+  gum_color:         'Pink & moist',
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────────────────────────────────────
@@ -229,6 +241,20 @@ function getFormData() {
   CHECK_IDS.forEach(id => { data[id] = el('f-' + id)?.checked || false })
   // Don't persist rr_time unless an actual RR reading was entered
   if (!data.rr) data.rr_time = ''
+  // Only save food section if at least one meal is populated
+  if (!data.food_am && !data.food_pm) {
+    data.food_am = data.food_pm = data.appetite = data.water_intake = ''
+    data.wet_topper = data.vomiting = false
+  }
+  // Only save urination section if count > 1
+  if (!(parseInt(data.urination_count) > 1)) {
+    data.urination_count = data.urine_color = data.urination_quality = data.straining = ''
+    data.blood_urine = false
+  }
+  // Only save bowel section if count > 1
+  if (!(parseInt(data.bowel_count) > 1)) {
+    data.bowel_count = data.stool_quality = ''
+  }
   return data
 }
 
@@ -311,7 +337,7 @@ function checkCollapse() {
 function onDateChange() {
   const date     = el('f-date').value
   const existing = log.find(e => e.date === date)
-  setFormData(existing ?? { date })
+  setFormData(existing ?? { date, ...DEFAULT_ENTRY })
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -879,7 +905,7 @@ async function saveVetNote() {
   await loadLog()
   if (!Object.keys(vetInfo).length) vetInfo = { ...DEFAULT_VET_INFO }
   const todayEntry = log.find(e => e.date === today())
-  if (todayEntry) setFormData(todayEntry)
+  setFormData(todayEntry ?? { date: today(), ...DEFAULT_ENTRY })
 })()
 
 // ─────────────────────────────────────────────────────────────────────────────
