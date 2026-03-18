@@ -626,7 +626,20 @@ function renderTrends() {
         borderRadius: 4,
       }],
     },
-    options: chartOpts({ min: 0 }),
+    options: {
+      ...chartOpts({ min: 0 }),
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            afterLabel: ctx => {
+              const appetite = recent[ctx.dataIndex]?.appetite
+              return appetite ? `Appetite: ${appetite.split('—')[0].trim()}` : ''
+            },
+          },
+        },
+      },
+    },
   })
 
   // ── 4. Urination Count ───────────────────────────────────────────────────
@@ -634,8 +647,8 @@ function renderTrends() {
   el('chart-urination-wrap').innerHTML = '<canvas id="chart-urination"></canvas>'
   const strainingColor = s => {
     if (s === 'Significant') return 'rgba(154,52,18,0.80)'
-    if (s === 'Mild')        return 'rgba(245,158,11,0.50)'
-    return                          'rgba(245,158,11,0.85)'
+    if (s === 'Mild')        return 'rgba(245,158,11,0.85)'
+    return                          'rgba(245,158,11,0.50)'
   }
   charts['chart-urination'] = new Chart(el('chart-urination'), {
     type: 'bar',
@@ -650,7 +663,20 @@ function renderTrends() {
         borderRadius: 4,
       }],
     },
-    options: chartOpts({ min: 0, ticks: { stepSize: 1, color: '#9ca3af', font: { size: 11 } } }),
+    options: {
+      ...chartOpts({ min: 0, ticks: { stepSize: 1, color: '#9ca3af', font: { size: 11 } } }),
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            afterLabel: ctx => {
+              const straining = recent[ctx.dataIndex]?.straining
+              return straining ? `Straining: ${straining}` : ''
+            },
+          },
+        },
+      },
+    },
   })
 
   // ── 5. Energy Level ──────────────────────────────────────────────────────
@@ -1031,11 +1057,11 @@ function showCollapseDay(dateStr) {
         ${isCollapse ? '<span class="badge badge-collapse text-xs"><i class="fa-solid fa-person-falling mr-1"></i>Collapse</span>' : ''}
       </div>
       ${collapseFields.length ? `
-        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-2">
+        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-2">
           ${collapseFields.map(([k, v]) => `
-            <div class="flex justify-between gap-2">
-              <span class="text-gray-400 shrink-0">${k}</span>
-              <span class="text-gray-700 font-medium text-right">${escHtml(v)}</span>
+            <div>
+              <div class="text-gray-400 mb-0.5">${k}</div>
+              <div class="text-gray-700 font-medium">${escHtml(v)}</div>
             </div>`).join('')}
         </div>` : ''}
       ${entry.notes ? `
