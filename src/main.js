@@ -29,7 +29,7 @@ const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Sat
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 const CHECK_IDS = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm','coughing','collapse','wet_topper','vomiting','blood_urine']
-const TEXT_IDS  = ['rr','rr_time','breathing_quality','appetite','food_am','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes','cough_desc']
+const TEXT_IDS  = ['rr','rr_time','breathing_quality','appetite','food_am','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes','collapse_trigger','collapse_duration','collapse_behavior','collapse_consciousness','collapse_recovery']
 const MED_IDS   = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm']
 
 const DEFAULT_MEDS = [
@@ -273,6 +273,7 @@ function setFormData(data) {
   checkBlood()
   checkStraining()
   checkCollapse()
+  syncSteppers()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -330,6 +331,22 @@ function checkCollapse() {
   el('collapse-field').style.display = el('f-collapse').checked ? 'block' : 'none'
 }
 
+function stepCount(id, delta) {
+  const hidden  = el('f-' + id)
+  const display = el('f-' + id + '-display')
+  const next    = Math.max(0, (parseInt(hidden.value) || 0) + delta)
+  hidden.value  = next
+  if (display) display.textContent = next
+}
+
+function syncSteppers() {
+  ;['urination_count', 'bowel_count'].forEach(id => {
+    const hidden  = el('f-' + id)
+    const display = el('f-' + id + '-display')
+    if (hidden && display) display.textContent = hidden.value || '0'
+  })
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Date change — populate form from existing entry
 // ─────────────────────────────────────────────────────────────────────────────
@@ -377,6 +394,7 @@ function switchTab(tab) {
     el('pane-' + t).style.display = tab === t ? 'block' : 'none'
     el('tab-'  + t).className     = 'tab ' + (tab === t ? 'active' : 'inactive')
   })
+  el('save-footer').style.display = tab === 'today' ? 'block' : 'none'
   if (tab === 'trends')   renderTrends()
   if (tab === 'history')  renderHistory()
   if (tab === 'vetinfo')  populateVetInfoForm()
@@ -439,6 +457,66 @@ function renderTrends() {
     scales: { x: scaleX, y: { ...scaleY, ...extra } },
   })
 
+  // ── 0. Collapse Episodes calendar ────────────────────────────────────────
+  const collapseSummaryEl = el('collapse-summary-content')
+  if (collapseSummaryEl) {
+    const todayStr = today()
+    const calEnd   = new Date(todayStr + 'T12:00:00')
+    const calStart = new Date(calEnd)
+    calStart.setDate(calStart.getDate() - 29)
+
+    const logMap = {}
+    log.forEach(e => { logMap[e.date] = e })
+
+    const calDays = []
+    for (let d = new Date(calStart); d <= calEnd; d.setDate(d.getDate() + 1)) {
+      const y   = d.getFullYear()
+      const m   = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      calDays.push({ dateStr: `${y}-${m}-${day}`, num: d.getDate(), dow: d.getDay() })
+    }
+
+    const totalCollapse = calDays.filter(d => logMap[d.dateStr]?.collapse).length
+    const startPad = calDays[0].dow
+
+    const headers = ['S','M','T','W','T','F','S']
+      .map(h => `<div class="text-center text-xs font-medium text-gray-400 pb-1">${h}</div>`)
+      .join('')
+
+    const pads = Array(startPad).fill('<div></div>').join('')
+
+    const cells = calDays.map(({ dateStr, num }) => {
+      const entry      = logMap[dateStr]
+      const isCollapse = entry?.collapse
+      const isToday    = dateStr === todayStr
+      if (isCollapse) {
+        return `<div class="aspect-video flex items-center justify-center rounded-md bg-red-600 text-white text-xs font-bold cursor-pointer hover:bg-red-700 transition-colors" onclick="showCollapseDay('${dateStr}')" title="Collapse — tap for details">${num}</div>`
+      } else if (entry) {
+        return `<div class="aspect-video flex items-center justify-center rounded-md ${isToday ? 'bg-blue-100 text-blue-700 font-semibold' : 'bg-gray-100 text-gray-500'} text-xs cursor-pointer hover:bg-gray-200 transition-colors" onclick="showCollapseDay('${dateStr}')">${num}</div>`
+      } else {
+        return `<div class="aspect-video flex items-center justify-center text-xs text-gray-300">${num}</div>`
+      }
+    }).join('')
+
+    const titleEl = el('collapse-card-title')
+    if (titleEl) {
+      titleEl.innerHTML = totalCollapse > 0
+        ? `${totalCollapse} Collapse Episode${totalCollapse !== 1 ? 's' : ''} <span class="section-subtitle">in last 30 days</span>`
+        : 'Collapse Episodes'
+    }
+
+    collapseSummaryEl.innerHTML = `
+      <div class="grid grid-cols-7 gap-1">
+        ${headers}${pads}${cells}
+      </div>
+      <div class="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-red-600"></span>Collapse</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-gray-100 border border-gray-200"></span>Logged</span>
+        <span class="flex items-center gap-1.5 text-gray-300">· No entry</span>
+      </div>
+      <div id="collapse-day-detail" class="mt-3"></div>`
+  }
+
   // ── 1. Respiratory Rate ──────────────────────────────────────────────────
   destroyChart('chart-rr')
   el('chart-rr-wrap').innerHTML = '<canvas id="chart-rr"></canvas>'
@@ -473,6 +551,17 @@ function renderTrends() {
           pointRadius: 0,
           fill: false,
           tension: 0,
+        },
+        {
+          label: 'Collapse',
+          data: recent.map(e => e.collapse ? (parseFloat(e.rr) || 12) : null),
+          borderColor: '#dc2626',
+          backgroundColor: '#dc2626',
+          pointStyle: 'crossRot',
+          pointRadius: 9,
+          pointHoverRadius: 11,
+          showLine: false,
+          fill: false,
         },
       ],
     },
@@ -514,6 +603,13 @@ function renderTrends() {
   // ── 3. Daily Food Intake ─────────────────────────────────────────────────
   destroyChart('chart-food')
   el('chart-food-wrap').innerHTML = '<canvas id="chart-food"></canvas>'
+  const appetiteColor = a => {
+    if (!a)                    return 'rgba(16,185,129,0.35)'
+    if (a.startsWith('Great')) return 'rgba(5,150,105,0.90)'
+    if (a.startsWith('Good'))  return 'rgba(16,185,129,0.70)'
+    if (a.startsWith('Fair'))  return 'rgba(52,211,153,0.50)'
+    return                            'rgba(110,231,183,0.35)'
+  }
   charts['chart-food'] = new Chart(el('chart-food'), {
     type: 'bar',
     data: {
@@ -524,8 +620,8 @@ function renderTrends() {
           const t = (parseFloat(e.food_am) || 0) + (parseFloat(e.food_pm) || 0)
           return t || null
         }),
-        backgroundColor: 'rgba(16,185,129,0.65)',
-        borderColor: '#10b981',
+        backgroundColor: recent.map(e => appetiteColor(e.appetite)),
+        borderColor:     recent.map(e => appetiteColor(e.appetite).replace(/[\d.]+\)$/, '1)')),
         borderWidth: 1,
         borderRadius: 4,
       }],
@@ -536,6 +632,11 @@ function renderTrends() {
   // ── 4. Urination Count ───────────────────────────────────────────────────
   destroyChart('chart-urination')
   el('chart-urination-wrap').innerHTML = '<canvas id="chart-urination"></canvas>'
+  const strainingColor = s => {
+    if (s === 'Significant') return 'rgba(154,52,18,0.80)'
+    if (s === 'Mild')        return 'rgba(245,158,11,0.50)'
+    return                          'rgba(245,158,11,0.85)'
+  }
   charts['chart-urination'] = new Chart(el('chart-urination'), {
     type: 'bar',
     data: {
@@ -543,8 +644,8 @@ function renderTrends() {
       datasets: [{
         label: 'Times urinated',
         data: recent.map(e => parseInt(e.urination_count) || null),
-        backgroundColor: 'rgba(245,158,11,0.65)',
-        borderColor: '#f59e0b',
+        backgroundColor: recent.map(e => strainingColor(e.straining)),
+        borderColor:     recent.map(e => strainingColor(e.straining).replace(/[\d.]+\)$/, '1)')),
         borderWidth: 1,
         borderRadius: 4,
       }],
@@ -630,8 +731,9 @@ function renderHistory() {
 
   container.innerHTML = log.map(e => {
     const rrNum   = parseFloat(e.rr)
-    const rrBadge = e.rr     ? `<span class="badge ${rrNum >= 30 ? 'badge-rr-warn' : 'badge-rr-ok'}">RR ${e.rr} bpm</span>` : ''
-    const wtBadge = e.weight ? `<span class="badge badge-weight">${e.weight} lbs</span>` : ''
+    const rrBadge       = e.rr       ? `<span class="badge ${rrNum >= 30 ? 'badge-rr-warn' : 'badge-rr-ok'}">RR ${e.rr} bpm</span>` : ''
+    const wtBadge       = e.weight   ? `<span class="badge badge-weight">${e.weight} lbs</span>` : ''
+    const collapseBadge = e.collapse ? `<span class="badge badge-collapse"><i class="fa-solid fa-person-falling mr-1"></i>Collapse</span>` : ''
     const medCount = MED_IDS.filter(k => e[k]).length
 
     const rows = [
@@ -647,15 +749,13 @@ function renderHistory() {
 
     return `
       <div class="section-card">
-        <div class="flex items-start justify-between mb-2">
+        <div class="flex items-start justify-between mb-1.5">
           <div class="font-semibold text-gray-900">${formatDate(e.date)}</div>
-          <div class="flex items-center gap-2">
-            <div class="flex gap-1.5 flex-wrap justify-end">${rrBadge}${wtBadge}</div>
-            <button onclick="editEntry('${e.date}')" class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-colors" title="Edit this entry">
-              <i class="fa-solid fa-pen-to-square"></i>Edit
-            </button>
-          </div>
+          <button onclick="editEntry('${e.date}')" class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-gray-200 text-xs font-medium text-gray-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-colors" title="Edit this entry">
+            <i class="fa-solid fa-pen-to-square"></i>Edit
+          </button>
         </div>
+        ${(collapseBadge || rrBadge || wtBadge) ? `<div class="flex gap-1.5 flex-wrap mb-2">${collapseBadge}${rrBadge}${wtBadge}</div>` : ''}
         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mb-2">
           ${rows.map(([k, v]) => `
             <div class="flex justify-between gap-2">
@@ -674,7 +774,7 @@ function renderHistory() {
 
 function exportCSV() {
   if (!log.length) { alert('No entries to export yet.'); return }
-  const keys = ['date','pimo_am','pimo_pm','enalapril','furo_am','furo_pm','rr','rr_time','breathing_quality','coughing','collapse','cough_desc','appetite','food_am','food_mid','food_pm','water_intake','wet_topper','fish_oil','sardines','vomiting','urination_count','urine_color','urination_quality','straining','blood_urine','bowel_count','stool_quality','energy','gum_color','weight','notes']
+  const keys = ['date','pimo_am','pimo_pm','enalapril','furo_am','furo_pm','rr','rr_time','breathing_quality','coughing','collapse','collapse_trigger','collapse_duration','collapse_behavior','collapse_consciousness','collapse_recovery','appetite','food_am','food_mid','food_pm','water_intake','wet_topper','fish_oil','sardines','vomiting','urination_count','urine_color','urination_quality','straining','blood_urine','bowel_count','stool_quality','energy','gum_color','weight','notes']
   const rows = log.map(e => keys.map(k => {
     const v = e[k] ?? ''
     return String(v).includes(',') ? `"${v}"` : v
@@ -897,6 +997,56 @@ async function saveVetNote() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Collapse calendar day detail
+// ─────────────────────────────────────────────────────────────────────────────
+
+function showCollapseDay(dateStr) {
+  const detailEl = el('collapse-day-detail')
+  if (!detailEl) return
+
+  const entry = log.find(e => e.date === dateStr)
+  if (!entry) return
+
+  // Toggle off if same day clicked again
+  if (detailEl.dataset.date === dateStr && detailEl.innerHTML) {
+    detailEl.innerHTML = ''
+    detailEl.dataset.date = ''
+    return
+  }
+  detailEl.dataset.date = dateStr
+
+  const collapseFields = [
+    entry.collapse_trigger      ? ['Trigger',       entry.collapse_trigger]      : null,
+    entry.collapse_duration     ? ['Duration',      entry.collapse_duration]     : null,
+    entry.collapse_behavior     ? ['What happened', entry.collapse_behavior]     : null,
+    entry.collapse_consciousness ? ['Consciousness', entry.collapse_consciousness] : null,
+    entry.collapse_recovery     ? ['Recovery',      entry.collapse_recovery]     : null,
+  ].filter(Boolean)
+
+  const isCollapse = entry.collapse
+  detailEl.innerHTML = `
+    <div class="pt-3 border-t ${isCollapse ? 'border-red-200' : 'border-gray-100'}">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold ${isCollapse ? 'text-red-700' : 'text-gray-600'}">${formatDate(dateStr)}</span>
+        ${isCollapse ? '<span class="badge badge-collapse text-xs"><i class="fa-solid fa-person-falling mr-1"></i>Collapse</span>' : ''}
+      </div>
+      ${collapseFields.length ? `
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mb-2">
+          ${collapseFields.map(([k, v]) => `
+            <div class="flex justify-between gap-2">
+              <span class="text-gray-400 shrink-0">${k}</span>
+              <span class="text-gray-700 font-medium text-right">${escHtml(v)}</span>
+            </div>`).join('')}
+        </div>` : ''}
+      ${entry.notes ? `
+        <div class="text-xs">
+          <div class="text-gray-400 mb-0.5">Notes</div>
+          <div class="text-gray-700">${escHtml(entry.notes)}</div>
+        </div>` : ''}
+    </div>`
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -935,4 +1085,6 @@ Object.assign(window, {
   checkStraining,
   checkCollapse,
   onDateChange,
+  showCollapseDay,
+  stepCount,
 })

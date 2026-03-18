@@ -90,6 +90,19 @@
   .badge-rr-ok   { @apply bg-green-100 text-green-700; }
   .badge-rr-warn { @apply bg-red-100 text-red-700; }
   .badge-weight  { @apply bg-blue-100 text-blue-700; }
+  .badge-collapse { @apply bg-red-600 text-white; }
+  .section-subtitle { font-weight: 300; color: rgba(0,0,0,0.45); }
+
+  /* ── Steppers ── */
+  .stepper { @apply flex items-center rounded-lg border border-gray-200 overflow-hidden; }
+  .stepper-btn {
+    @apply px-3 py-2 bg-gray-50 text-gray-600 text-base font-medium
+           hover:bg-gray-100 active:bg-gray-200 transition-colors select-none cursor-pointer;
+  }
+  .stepper-val {
+    @apply flex-1 text-center text-sm font-semibold text-gray-800
+           border-x border-gray-200 py-2 min-w-[2.5rem] bg-white;
+  }
 
   /* ── Tabs ── */
   .tab {
