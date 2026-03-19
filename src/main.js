@@ -246,13 +246,13 @@ function getFormData() {
     data.food_am = data.food_pm = data.appetite = data.water_intake = ''
     data.wet_topper = data.vomiting = false
   }
-  // Only save urination section if count > 1
-  if (!(parseInt(data.urination_count) > 1)) {
+  // Only save urination section if count >= 1
+  if (!(parseInt(data.urination_count) >= 1)) {
     data.urination_count = data.urine_color = data.urination_quality = data.straining = ''
     data.blood_urine = false
   }
-  // Only save bowel section if count > 1
-  if (!(parseInt(data.bowel_count) > 1)) {
+  // Only save bowel section if count >= 1
+  if (!(parseInt(data.bowel_count) >= 1)) {
     data.bowel_count = data.stool_quality = ''
   }
   return data
