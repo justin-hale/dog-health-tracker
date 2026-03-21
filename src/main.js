@@ -29,7 +29,7 @@ const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Sat
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 const CHECK_IDS = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm','coughing','collapse','wet_topper','vomiting','blood_urine']
-const TEXT_IDS  = ['rr','rr_time','breathing_quality','appetite','food_am','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes','collapse_trigger','collapse_duration','collapse_behavior','collapse_consciousness','collapse_recovery']
+const TEXT_IDS  = ['rr','rr_time','breathing_quality','appetite','food_am','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes']
 const MED_IDS   = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm']
 
 const DEFAULT_MEDS = [
@@ -59,10 +59,11 @@ const DEFAULT_ENTRY = {
 // State
 // ─────────────────────────────────────────────────────────────────────────────
 
-let log           = []
-let vetInfo       = {}
-let cfg           = { gistId: '', token: '' }
-let coughEpisodes = []   // episodes for the currently-displayed date
+let log              = []
+let vetInfo          = {}
+let cfg              = { gistId: '', token: '' }
+let coughEpisodes    = []   // episodes for the currently-displayed date
+let collapseEpisodes = []
 const charts = {}
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -258,6 +259,8 @@ function getFormData() {
   }
   // Include cough episodes only if coughing was checked
   data.cough_episodes = data.coughing ? [...coughEpisodes] : []
+  // Include collapse episodes only if collapse was checked
+  data.collapse_episodes = data.collapse ? [...collapseEpisodes] : []
   return data
 }
 
@@ -272,6 +275,21 @@ function setFormData(data) {
     if (input) { input.checked = !!data[id]; syncCheckLabel(id, !!data[id]) }
   })
   coughEpisodes = Array.isArray(data?.cough_episodes) ? [...data.cough_episodes] : []
+  // Restore collapse episodes; migrate legacy single-field entries
+  if (Array.isArray(data?.collapse_episodes) && data.collapse_episodes.length) {
+    collapseEpisodes = [...data.collapse_episodes]
+  } else if (data?.collapse && (data.collapse_trigger || data.collapse_duration || data.collapse_behavior)) {
+    collapseEpisodes = [{
+      time:          '',
+      trigger:       data.collapse_trigger       || '',
+      duration:      data.collapse_duration      || '',
+      behavior:      data.collapse_behavior      || '',
+      consciousness: data.collapse_consciousness || '',
+      recovery:      data.collapse_recovery      || '',
+    }]
+  } else {
+    collapseEpisodes = []
+  }
   checkRR()
   checkGums()
   checkBlood()
@@ -333,7 +351,94 @@ function checkStraining() {
 }
 
 function checkCollapse() {
-  el('collapse-field').style.display = el('f-collapse').checked ? 'block' : 'none'
+  const checked = el('f-collapse').checked
+  el('collapse-log-section').style.display = checked ? 'block' : 'none'
+  renderCollapseEpisodesList()
+  updateCollapseBadge()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Collapse episode logging
+// ─────────────────────────────────────────────────────────────────────────────
+
+function updateCollapseBadge() {
+  const badge = el('collapse-episode-badge')
+  if (!badge) return
+  const count = collapseEpisodes.length
+  if (count > 0 && el('f-collapse').checked) {
+    badge.textContent = count
+    badge.classList.remove('hidden')
+    badge.classList.add('inline-flex')
+  } else {
+    badge.classList.add('hidden')
+    badge.classList.remove('inline-flex')
+  }
+}
+
+function renderCollapseEpisodesList() {
+  const list = el('collapse-episodes-list')
+  if (!list) return
+  if (!collapseEpisodes.length) { list.innerHTML = ''; return }
+  list.innerHTML = collapseEpisodes.map((ep, i) => {
+    const pills = [ep.trigger, ep.duration, ep.behavior, ep.consciousness, ep.recovery].filter(Boolean)
+    return `
+      <div class="px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="font-medium text-red-700 shrink-0">${ep.time || '—'}</span>
+          <span class="flex flex-wrap gap-1 flex-1">
+            ${pills.map(p => `<span class="inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">${escHtml(p)}</span>`).join('')}
+          </span>
+          <button onclick="removeCollapseEpisode(${i})" class="shrink-0 text-red-300 hover:text-red-500 transition-colors">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>`
+  }).join('')
+}
+
+function removeCollapseEpisode(index) {
+  collapseEpisodes.splice(index, 1)
+  if (!collapseEpisodes.length) el('f-collapse').checked = false, syncCheckLabel('collapse', false)
+  renderCollapseEpisodesList()
+  updateCollapseBadge()
+  checkCollapse()
+}
+
+function openCollapseSheet() {
+  el('collapse-ep-time').value = currentTime()
+  document.querySelectorAll('#collapse-sheet .cough-toggle-btn, #collapse-sheet .cough-pill-btn')
+    .forEach(b => b.classList.remove('selected'))
+  el('collapse-sheet').style.display = 'block'
+}
+
+function closeCollapseSheet() {
+  el('collapse-sheet').style.display = 'none'
+}
+
+function selectCollapseToggle(btn) {
+  const group = btn.dataset.group
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(b => b.classList.remove('selected'))
+  btn.classList.add('selected')
+}
+
+function logCollapseEpisode() {
+  const time    = el('collapse-ep-time').value
+  const trigEl  = document.querySelector('[data-group="col-trigger"].selected')
+  const durEl   = document.querySelector('[data-group="col-duration"].selected')
+  const behEl   = document.querySelector('[data-group="col-behavior"].selected')
+  const conEl   = document.querySelector('[data-group="col-consciousness"].selected')
+  const recEl   = document.querySelector('[data-group="col-recovery"].selected')
+  collapseEpisodes.push({
+    time:          time || currentTime(),
+    trigger:       trigEl?.dataset.value || '',
+    duration:      durEl?.dataset.value  || '',
+    behavior:      behEl?.dataset.value  || '',
+    consciousness: conEl?.dataset.value  || '',
+    recovery:      recEl?.dataset.value  || '',
+  })
+  renderCollapseEpisodesList()
+  updateCollapseBadge()
+  closeCollapseSheet()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -566,7 +671,14 @@ function renderTrends() {
       calDays.push({ dateStr: `${y}-${m}-${day}`, num: d.getDate(), dow: d.getDay() })
     }
 
-    const totalCollapse = calDays.filter(d => logMap[d.dateStr]?.collapse).length
+    const epCountForDay = d => {
+      const e = logMap[d]
+      if (!e?.collapse) return 0
+      return Array.isArray(e.collapse_episodes) && e.collapse_episodes.length
+        ? e.collapse_episodes.length
+        : (e.collapse_trigger || e.collapse_duration ? 1 : 1)
+    }
+    const totalCollapse = calDays.reduce((sum, d) => sum + epCountForDay(d.dateStr), 0)
     const startPad = calDays[0].dow
 
     const headers = ['S','M','T','W','T','F','S']
@@ -579,8 +691,10 @@ function renderTrends() {
       const entry      = logMap[dateStr]
       const isCollapse = entry?.collapse
       const isToday    = dateStr === todayStr
+      const epCount    = epCountForDay(dateStr)
       if (isCollapse) {
-        return `<div class="aspect-video flex items-center justify-center rounded-md bg-red-600 text-white text-xs font-bold cursor-pointer hover:bg-red-700 transition-colors" onclick="showCollapseDay('${dateStr}')" title="Collapse — tap for details">${num}</div>`
+        const badge = epCount > 1 ? `<span class="absolute top-0.5 right-0.5 text-[9px] font-bold leading-none">${epCount}</span>` : ''
+        return `<div class="relative aspect-video flex items-center justify-center rounded-md bg-red-600 text-white text-xs font-bold cursor-pointer hover:bg-red-700 transition-colors" onclick="showCollapseDay('${dateStr}')" title="${epCount} collapse episode${epCount !== 1 ? 's' : ''} — tap for details">${num}${badge}</div>`
       } else if (entry) {
         return `<div class="aspect-video flex items-center justify-center rounded-md ${isToday ? 'bg-blue-100 text-blue-700 font-semibold' : 'bg-gray-100 text-gray-500'} text-xs cursor-pointer hover:bg-gray-200 transition-colors" onclick="showCollapseDay('${dateStr}')">${num}</div>`
       } else {
@@ -1179,31 +1293,53 @@ function showCollapseDay(dateStr) {
   }
   detailEl.dataset.date = dateStr
 
-  const collapseFields = [
-    entry.collapse_trigger      ? ['Trigger',       entry.collapse_trigger]      : null,
-    entry.collapse_duration     ? ['Duration',      entry.collapse_duration]     : null,
-    entry.collapse_behavior     ? ['What happened', entry.collapse_behavior]     : null,
-    entry.collapse_consciousness ? ['Consciousness', entry.collapse_consciousness] : null,
-    entry.collapse_recovery     ? ['Recovery',      entry.collapse_recovery]     : null,
-  ].filter(Boolean)
+  // Gather episodes — prefer new array, fall back to legacy single-field
+  const episodes = Array.isArray(entry.collapse_episodes) && entry.collapse_episodes.length
+    ? entry.collapse_episodes
+    : (entry.collapse && (entry.collapse_trigger || entry.collapse_duration || entry.collapse_behavior)
+        ? [{ time: '', trigger: entry.collapse_trigger, duration: entry.collapse_duration,
+              behavior: entry.collapse_behavior, consciousness: entry.collapse_consciousness,
+              recovery: entry.collapse_recovery }]
+        : [])
 
+  const epCount    = episodes.length
   const isCollapse = entry.collapse
+
+  const episodeCards = episodes.map((ep, i) => {
+    const fields = [
+      ep.trigger       ? ['Trigger',       ep.trigger]       : null,
+      ep.duration      ? ['Duration',      ep.duration]      : null,
+      ep.behavior      ? ['What happened', ep.behavior]      : null,
+      ep.consciousness ? ['Consciousness', ep.consciousness] : null,
+      ep.recovery      ? ['Recovery',      ep.recovery]      : null,
+    ].filter(Boolean)
+    return `
+      <div class="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs ${i > 0 ? 'mt-2' : ''}">
+        <div class="flex items-center gap-2 mb-1.5">
+          <i class="fa-solid fa-person-falling text-red-500 text-xs"></i>
+          <span class="font-semibold text-red-700">Episode ${epCount > 1 ? i + 1 : ''}</span>
+          ${ep.time ? `<span class="text-red-400 ml-auto">${escHtml(ep.time)}</span>` : ''}
+        </div>
+        ${fields.length ? `
+          <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            ${fields.map(([k, v]) => `
+              <div>
+                <div class="text-gray-400 mb-0.5">${k}</div>
+                <div class="text-red-800 font-medium">${escHtml(v)}</div>
+              </div>`).join('')}
+          </div>` : '<span class="text-red-400 italic">No details recorded</span>'}
+      </div>`
+  }).join('')
+
   detailEl.innerHTML = `
     <div class="pt-3 border-t ${isCollapse ? 'border-red-200' : 'border-gray-100'}">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-semibold ${isCollapse ? 'text-red-700' : 'text-gray-600'}">${formatDate(dateStr)}</span>
-        ${isCollapse ? '<span class="badge badge-collapse text-xs"><i class="fa-solid fa-person-falling mr-1"></i>Collapse</span>' : ''}
+        ${isCollapse ? `<span class="badge badge-collapse text-xs"><i class="fa-solid fa-person-falling mr-1"></i>${epCount} Collapse${epCount !== 1 ? 's' : ''}</span>` : ''}
       </div>
-      ${collapseFields.length ? `
-        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-2">
-          ${collapseFields.map(([k, v]) => `
-            <div>
-              <div class="text-gray-400 mb-0.5">${k}</div>
-              <div class="text-gray-700 font-medium">${escHtml(v)}</div>
-            </div>`).join('')}
-        </div>` : ''}
+      ${episodeCards}
       ${entry.notes ? `
-        <div class="text-xs">
+        <div class="text-xs mt-2">
           <div class="text-gray-400 mb-0.5">Notes</div>
           <div class="text-gray-700">${escHtml(entry.notes)}</div>
         </div>` : ''}
@@ -1254,6 +1390,11 @@ Object.assign(window, {
   selectCoughToggle,
   logCoughEpisode,
   removeCoughEpisode,
+  openCollapseSheet,
+  closeCollapseSheet,
+  selectCollapseToggle,
+  logCollapseEpisode,
+  removeCollapseEpisode,
   onDateChange,
   showCollapseDay,
   stepCount,
