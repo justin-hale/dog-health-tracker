@@ -66,6 +66,12 @@ let coughEpisodes    = []   // episodes for the currently-displayed date
 let collapseEpisodes = []
 const charts = {}
 
+// RR counter sheet state
+let rrTimerInterval = null
+let rrSecondsLeft   = 60
+let rrBreathCount   = 0
+let rrTimerRunning  = false
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilities
 // ─────────────────────────────────────────────────────────────────────────────
@@ -329,6 +335,71 @@ function checkRR() {
     alert.innerHTML = '<div class="alert-warn"><i class="fa-solid fa-triangle-exclamation shrink-0"></i>RR ≥ 30 — Call your vet today</div>'
   else
     alert.innerHTML = ''
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RR counter sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+function openRRSheet() {
+  resetRRTimer()
+  el('rr-sheet').style.display = 'block'
+}
+
+function closeRRSheet() {
+  clearInterval(rrTimerInterval)
+  rrTimerInterval = null
+  rrTimerRunning  = false
+  el('rr-sheet').style.display = 'none'
+}
+
+function startRRTimer() {
+  if (rrTimerRunning) return
+  rrTimerRunning = true
+  const startBtn = el('rr-start-btn')
+  startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Counting…'
+  startBtn.disabled  = true
+  rrTimerInterval = setInterval(() => {
+    rrSecondsLeft--
+    const countdown = el('rr-countdown')
+    countdown.textContent = rrSecondsLeft
+    if (rrSecondsLeft <= 10) countdown.classList.add('text-rose-500')
+    if (rrSecondsLeft <= 0) {
+      clearInterval(rrTimerInterval)
+      rrTimerInterval = null
+      rrTimerRunning  = false
+      // Fill the RR input and timestamp
+      el('f-rr').value      = rrBreathCount
+      el('f-rr_time').value = currentTime()
+      checkRR()
+      // Show completion message
+      el('rr-complete-text').textContent = `${rrBreathCount} breaths/min logged!`
+      el('rr-complete-msg').classList.remove('hidden')
+      startBtn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Done'
+      startBtn.disabled  = false
+    }
+  }, 1000)
+}
+
+function resetRRTimer() {
+  clearInterval(rrTimerInterval)
+  rrTimerInterval = null
+  rrTimerRunning  = false
+  rrSecondsLeft   = 60
+  rrBreathCount   = 0
+  const countdown = el('rr-countdown')
+  countdown.textContent = '60'
+  countdown.classList.remove('text-rose-500')
+  el('rr-breath-count').textContent = '0'
+  el('rr-complete-msg').classList.add('hidden')
+  const startBtn = el('rr-start-btn')
+  startBtn.innerHTML = '<i class="fa-solid fa-play mr-2"></i>Start'
+  startBtn.disabled  = false
+}
+
+function stepRRBreaths(delta) {
+  rrBreathCount = Math.max(0, rrBreathCount + delta)
+  el('rr-breath-count').textContent = rrBreathCount
 }
 
 function checkGums() {
@@ -1398,4 +1469,9 @@ Object.assign(window, {
   onDateChange,
   showCollapseDay,
   stepCount,
+  openRRSheet,
+  closeRRSheet,
+  startRRTimer,
+  resetRRTimer,
+  stepRRBreaths,
 })
