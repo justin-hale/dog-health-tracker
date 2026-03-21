@@ -1118,21 +1118,77 @@ function renderHistory() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CSV export
+// Export (CSV + JSON)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function exportCSV() {
-  if (!log.length) { alert('No entries to export yet.'); return }
-  const keys = ['date','pimo_am','pimo_pm','enalapril','furo_am','furo_pm','rr','rr_time','breathing_quality','coughing','collapse','collapse_trigger','collapse_duration','collapse_behavior','collapse_consciousness','collapse_recovery','appetite','food_am','food_mid','food_pm','water_intake','wet_topper','fish_oil','sardines','vomiting','urination_count','urine_color','urination_quality','straining','blood_urine','bowel_count','stool_quality','energy','gum_color','weight','notes']
-  const rows = log.map(e => keys.map(k => {
-    const v = e[k] ?? ''
-    return String(v).includes(',') ? `"${v}"` : v
-  }).join(','))
-  const csv = [keys.join(','), ...rows].join('\n')
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-  const a   = Object.assign(document.createElement('a'), { href: url, download: `gizmo-log-${today()}.csv` })
+function triggerDownload(content, filename, mimeType) {
+  const url = URL.createObjectURL(new Blob([content], { type: mimeType }))
+  const a   = Object.assign(document.createElement('a'), { href: url, download: filename })
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+function toggleExportMenu() {
+  const menu = el('export-menu')
+  menu.classList.toggle('hidden')
+  if (!menu.classList.contains('hidden')) {
+    setTimeout(() => document.addEventListener('click', onExportOutsideClick, { once: true }), 0)
+  }
+}
+
+function onExportOutsideClick(e) {
+  if (e.target.closest('#export-btn, #export-menu')) {
+    if (!el('export-menu').classList.contains('hidden'))
+      document.addEventListener('click', onExportOutsideClick, { once: true })
+    return
+  }
+  closeExportMenu()
+}
+
+function closeExportMenu() {
+  el('export-menu')?.classList.add('hidden')
+}
+
+function exportCSV() {
+  closeExportMenu()
+  if (!log.length) { alert('No entries to export yet.'); return }
+
+  const keys = [
+    'date','pimo_am','pimo_pm','enalapril','furo_am','furo_pm',
+    'rr','rr_time','breathing_quality',
+    'coughing','cough_count','cough_episodes',
+    'collapse','collapse_count','collapse_episodes',
+    'appetite','food_am','food_mid','food_pm','water_intake',
+    'wet_topper','fish_oil','sardines','vomiting',
+    'urination_count','urine_color','urination_quality','straining','blood_urine',
+    'bowel_count','stool_quality','energy','gum_color','weight','notes',
+  ]
+
+  const csvCell = v => {
+    const s = String(v ?? '')
+    return (s.includes(',') || s.includes('"') || s.includes('\n'))
+      ? `"${s.replace(/"/g, '""')}"` : s
+  }
+
+  const rows = log.map(e => {
+    const coughEps    = Array.isArray(e.cough_episodes)    ? e.cough_episodes    : []
+    const collapseEps = Array.isArray(e.collapse_episodes) ? e.collapse_episodes : []
+    return keys.map(k => {
+      if (k === 'cough_count')       return coughEps.length
+      if (k === 'cough_episodes')    return csvCell(JSON.stringify(coughEps))
+      if (k === 'collapse_count')    return collapseEps.length
+      if (k === 'collapse_episodes') return csvCell(JSON.stringify(collapseEps))
+      return csvCell(e[k] ?? '')
+    }).join(',')
+  })
+
+  triggerDownload([keys.join(','), ...rows].join('\n'), `gizmo-log-${today()}.csv`, 'text/csv')
+}
+
+function exportJSON() {
+  closeExportMenu()
+  if (!log.length) { alert('No entries to export yet.'); return }
+  triggerDownload(JSON.stringify(log, null, 2), `gizmo-log-${today()}.json`, 'application/json')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1437,7 +1493,9 @@ Object.assign(window, {
   switchTab,
   saveEntry,
   editEntry,
+  toggleExportMenu,
   exportCSV,
+  exportJSON,
   openSettings,
   closeSettings,
   saveSettings,

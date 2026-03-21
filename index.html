@@ -33,9 +33,19 @@
     </div>
     <div class="flex items-center gap-1">
       <div id="sync-status" class="flex items-center gap-1.5 mr-1"></div>
-      <button onclick="exportCSV()" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors" title="Export CSV">
-        <i class="fa-solid fa-file-csv text-sm"></i>
-      </button>
+      <div class="relative">
+        <button id="export-btn" onclick="toggleExportMenu()" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors" title="Export">
+          <i class="fa-solid fa-download text-sm"></i>
+        </button>
+        <div id="export-menu" class="hidden absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50 w-40">
+          <button onclick="exportCSV()" class="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left">
+            <i class="fa-solid fa-file-csv text-blue-500 w-4 text-center"></i>Export CSV
+          </button>
+          <button onclick="exportJSON()" class="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left border-t border-gray-100">
+            <i class="fa-solid fa-file-code text-green-500 w-4 text-center"></i>Export JSON
+          </button>
+        </div>
+      </div>
       <button onclick="openSettings()" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors" title="Settings">
         <i class="fa-solid fa-gear text-sm"></i>
       </button>
