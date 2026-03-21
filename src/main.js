@@ -463,6 +463,7 @@ function renderCollapseEpisodesList() {
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
+        ${ep.notes ? `<p class="mt-1.5 text-gray-500 leading-snug pl-0.5">${escHtml(ep.notes)}</p>` : ''}
       </div>`
   }).join('')
 }
@@ -476,7 +477,8 @@ function removeCollapseEpisode(index) {
 }
 
 function openCollapseSheet() {
-  el('collapse-ep-time').value = currentTime()
+  el('collapse-ep-time').value  = currentTime()
+  el('collapse-ep-notes').value = ''
   document.querySelectorAll('#collapse-sheet .cough-toggle-btn, #collapse-sheet .cough-pill-btn')
     .forEach(b => b.classList.remove('selected'))
   el('collapse-sheet').style.display = 'block'
@@ -499,6 +501,7 @@ function logCollapseEpisode() {
   const behEl   = document.querySelector('[data-group="col-behavior"].selected')
   const conEl   = document.querySelector('[data-group="col-consciousness"].selected')
   const recEl   = document.querySelector('[data-group="col-recovery"].selected')
+  const notes   = el('collapse-ep-notes').value.trim()
   collapseEpisodes.push({
     time:          time || currentTime(),
     trigger:       trigEl?.dataset.value || '',
@@ -506,6 +509,7 @@ function logCollapseEpisode() {
     behavior:      behEl?.dataset.value  || '',
     consciousness: conEl?.dataset.value  || '',
     recovery:      recEl?.dataset.value  || '',
+    notes,
   })
   renderCollapseEpisodesList()
   updateCollapseBadge()
@@ -1001,6 +1005,50 @@ function renderTrends() {
       },
     },
   })
+
+  // ── 4b. Bowel Movements ───────────────────────────────────────────────────
+  destroyChart('chart-bowel')
+  el('chart-bowel-wrap').innerHTML = '<canvas id="chart-bowel"></canvas>'
+  const stoolColor = s => {
+    if (s === 'Normal formed') return 'rgba(34,197,94,0.75)'
+    if (s === 'Soft')          return 'rgba(234,179,8,0.75)'
+    if (s === 'Loose')         return 'rgba(249,115,22,0.75)'
+    if (s === 'Diarrhea')      return 'rgba(239,68,68,0.85)'
+    return                            'rgba(156,163,175,0.50)'
+  }
+  const bowelData = recent.map(e => parseInt(e.bowel_count) || null)
+  if (bowelData.some(v => v !== null)) {
+    charts['chart-bowel'] = new Chart(el('chart-bowel'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Bowel movements',
+          data: bowelData,
+          backgroundColor: recent.map(e => stoolColor(e.stool_quality)),
+          borderColor:     recent.map(e => stoolColor(e.stool_quality).replace(/[\d.]+\)$/, '1)')),
+          borderWidth: 1,
+          borderRadius: 4,
+        }],
+      },
+      options: {
+        ...chartOpts({ min: 0, ticks: { stepSize: 1, color: '#9ca3af', font: { size: 11 } } }),
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterLabel: ctx => {
+                const q = recent[ctx.dataIndex]?.stool_quality
+                return q ? `Quality: ${q}` : ''
+              },
+            },
+          },
+        },
+      },
+    })
+  } else {
+    el('chart-bowel-wrap').innerHTML = '<p class="text-center text-gray-400 text-sm py-8">No bowel movement data recorded yet</p>'
+  }
 
   // ── 5. Energy Level ──────────────────────────────────────────────────────
   destroyChart('chart-energy')
