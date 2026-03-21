@@ -161,11 +161,11 @@
           <span class="check-dot">○</span><span>Coughing today</span>
           <span id="cough-episode-badge" class="ml-auto hidden items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-blue-500 text-white text-xs font-bold">0</span>
         </label>
-        <label class="check-label" id="lbl-collapse">
+        <label class="check-label checked-warn" id="lbl-collapse">
           <input type="checkbox" id="f-collapse" class="sr-only" onchange="updateCheck('collapse'); checkCollapse()">
           <span class="check-dot">○</span>
           <span>Collapse episode</span>
-          <i class="fa-solid fa-circle-exclamation text-red-400 ml-auto text-xs"></i>
+          <span id="collapse-episode-badge" class="ml-auto hidden items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-red-600 text-white text-xs font-bold">0</span>
         </label>
       </div>
       <!-- Cough log section — shown when Coughing today is checked -->
@@ -175,60 +175,12 @@
         </button>
         <div id="cough-episodes-list" class="mt-2 space-y-1.5"></div>
       </div>
-      <div id="collapse-field" style="display:none;" class="mt-3 space-y-2">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Trigger</label>
-            <select id="f-collapse_trigger" class="form-input">
-              <option value="">Select...</option>
-              <option>Exertion</option>
-              <option>Excitement</option>
-              <option>Going outside</option>
-              <option>Spontaneous</option>
-              <option>Unknown</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Duration</label>
-            <select id="f-collapse_duration" class="form-input">
-              <option value="">Select...</option>
-              <option>&lt;10 sec</option>
-              <option>10–30 sec</option>
-              <option>30–60 sec</option>
-              <option>&gt;1 min</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">What happened</label>
-          <select id="f-collapse_behavior" class="form-input">
-            <option value="">Select...</option>
-            <option>Froze / braced</option>
-            <option>Stumbled / staggered</option>
-            <option>Fell over</option>
-            <option>Couldn't stand</option>
-          </select>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Consciousness</label>
-            <select id="f-collapse_consciousness" class="form-input">
-              <option value="">Select...</option>
-              <option>Stayed alert</option>
-              <option>Briefly unresponsive</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Recovery</label>
-            <select id="f-collapse_recovery" class="form-input">
-              <option value="">Select...</option>
-              <option>Immediate</option>
-              <option>&lt;1 min</option>
-              <option>1–5 min</option>
-              <option>&gt;5 min</option>
-            </select>
-          </div>
-        </div>
+      <!-- Collapse log section — shown when Collapse episode is checked -->
+      <div id="collapse-log-section" style="display:none;" class="mt-3">
+        <button class="btn-collapse-log" onclick="openCollapseSheet()">
+          <i class="fa-solid fa-plus mr-2"></i>Log a collapse episode
+        </button>
+        <div id="collapse-episodes-list" class="mt-2 space-y-1.5"></div>
       </div>
     </div>
 
@@ -1127,6 +1079,85 @@
     </div>
 
     <button class="btn-primary" onclick="logCoughEpisode()">
+      <i class="fa-solid fa-plus mr-2"></i>Add Episode
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ COLLAPSE BOTTOM SHEET -->
+<div id="collapse-sheet" class="fixed inset-x-0 bottom-0 z-50" style="display:none;">
+  <div class="absolute inset-x-0 top-0 bottom-0 -z-10 translate-y-[-100vh] h-[200vh] bg-black/40" onclick="closeCollapseSheet()"></div>
+  <div class="relative bg-white rounded-t-2xl shadow-2xl px-5 pt-5 pb-8 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-gray-800 text-base">
+        <i class="fa-solid fa-person-falling text-red-500 mr-2"></i>Log Collapse Episode
+      </h3>
+      <button onclick="closeCollapseSheet()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Time -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-1.5" for="collapse-ep-time">Time</label>
+      <input type="time" id="collapse-ep-time" class="form-input">
+    </div>
+
+    <!-- Trigger -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Trigger</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Exertion" onclick="selectCollapseToggle(this)">Exertion</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Excitement" onclick="selectCollapseToggle(this)">Excitement</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Going outside" onclick="selectCollapseToggle(this)">Going outside</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Spontaneous" onclick="selectCollapseToggle(this)">Spontaneous</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Unknown" onclick="selectCollapseToggle(this)">Unknown</button>
+      </div>
+    </div>
+
+    <!-- Duration -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Duration</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="&lt;10 sec" onclick="selectCollapseToggle(this)">&lt;10 sec</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="10–30 sec" onclick="selectCollapseToggle(this)">10–30 sec</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="30–60 sec" onclick="selectCollapseToggle(this)">30–60 sec</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="&gt;1 min" onclick="selectCollapseToggle(this)">&gt;1 min</button>
+      </div>
+    </div>
+
+    <!-- What happened -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">What happened</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Froze / braced" onclick="selectCollapseToggle(this)">Froze / braced</button>
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Stumbled / staggered" onclick="selectCollapseToggle(this)">Stumbled / staggered</button>
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Fell over" onclick="selectCollapseToggle(this)">Fell over</button>
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Couldn't stand" onclick="selectCollapseToggle(this)">Couldn't stand</button>
+      </div>
+    </div>
+
+    <!-- Consciousness -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Consciousness</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="col-consciousness" data-value="Stayed alert" onclick="selectCollapseToggle(this)">Stayed alert</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-consciousness" data-value="Briefly unresponsive" onclick="selectCollapseToggle(this)">Briefly unresponsive</button>
+      </div>
+    </div>
+
+    <!-- Recovery -->
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Recovery</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="Immediate" onclick="selectCollapseToggle(this)">Immediate</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="&lt;1 min" onclick="selectCollapseToggle(this)">&lt;1 min</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="1–5 min" onclick="selectCollapseToggle(this)">1–5 min</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="&gt;5 min" onclick="selectCollapseToggle(this)">&gt;5 min</button>
+      </div>
+    </div>
+
+    <button class="btn-collapse-log" onclick="logCollapseEpisode()">
       <i class="fa-solid fa-plus mr-2"></i>Add Episode
     </button>
   </div>
