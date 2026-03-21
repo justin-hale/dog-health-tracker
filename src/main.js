@@ -59,9 +59,10 @@ const DEFAULT_ENTRY = {
 // State
 // ─────────────────────────────────────────────────────────────────────────────
 
-let log     = []
-let vetInfo = {}
-let cfg     = { gistId: '', token: '' }
+let log           = []
+let vetInfo       = {}
+let cfg           = { gistId: '', token: '' }
+let coughEpisodes = []   // episodes for the currently-displayed date
 const charts = {}
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -255,6 +256,8 @@ function getFormData() {
   if (!(parseInt(data.bowel_count) >= 1)) {
     data.bowel_count = data.stool_quality = ''
   }
+  // Include cough episodes only if coughing was checked
+  data.cough_episodes = data.coughing ? [...coughEpisodes] : []
   return data
 }
 
@@ -268,11 +271,13 @@ function setFormData(data) {
     const input = el('f-' + id)
     if (input) { input.checked = !!data[id]; syncCheckLabel(id, !!data[id]) }
   })
+  coughEpisodes = Array.isArray(data?.cough_episodes) ? [...data.cough_episodes] : []
   checkRR()
   checkGums()
   checkBlood()
   checkStraining()
   checkCollapse()
+  checkCoughing()
   syncSteppers()
 }
 
@@ -329,6 +334,91 @@ function checkStraining() {
 
 function checkCollapse() {
   el('collapse-field').style.display = el('f-collapse').checked ? 'block' : 'none'
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cough episode logging
+// ─────────────────────────────────────────────────────────────────────────────
+
+function checkCoughing() {
+  const checked = el('f-coughing').checked
+  el('cough-log-section').style.display = checked ? 'block' : 'none'
+  renderCoughEpisodesList()
+  updateCoughBadge()
+}
+
+function updateCoughBadge() {
+  const badge = el('cough-episode-badge')
+  if (!badge) return
+  const count = coughEpisodes.length
+  if (count > 0 && el('f-coughing').checked) {
+    badge.textContent = count
+    badge.classList.remove('hidden')
+    badge.classList.add('inline-flex')
+  } else {
+    badge.classList.add('hidden')
+    badge.classList.remove('inline-flex')
+  }
+}
+
+function renderCoughEpisodesList() {
+  const list = el('cough-episodes-list')
+  if (!list) return
+  if (!coughEpisodes.length) { list.innerHTML = ''; return }
+  list.innerHTML = coughEpisodes.map((ep, i) => {
+    const pills = [ep.type, ep.context, ep.severity].filter(Boolean)
+    return `
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-xs">
+        <span class="font-medium text-gray-500 shrink-0">${ep.time || '—'}</span>
+        <span class="flex flex-wrap gap-1 flex-1">
+          ${pills.map(p => `<span class="inline-block px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">${escHtml(p)}</span>`).join('')}
+        </span>
+        <button onclick="removeCoughEpisode(${i})" class="shrink-0 text-gray-300 hover:text-red-400 transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>`
+  }).join('')
+}
+
+function removeCoughEpisode(index) {
+  coughEpisodes.splice(index, 1)
+  renderCoughEpisodesList()
+  updateCoughBadge()
+}
+
+function openCoughSheet() {
+  el('cough-time').value = currentTime()
+  // Clear all selections
+  document.querySelectorAll('#cough-sheet .cough-toggle-btn, #cough-sheet .cough-pill-btn')
+    .forEach(b => b.classList.remove('selected'))
+  el('cough-sheet').style.display = 'block'
+}
+
+function closeCoughSheet() {
+  el('cough-sheet').style.display = 'none'
+}
+
+function selectCoughToggle(btn) {
+  const group = btn.dataset.group
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(b => b.classList.remove('selected'))
+  btn.classList.add('selected')
+}
+
+function logCoughEpisode() {
+  const time     = el('cough-time').value
+  const typeEl   = document.querySelector('[data-group="cough-type"].selected')
+  const ctxEl    = document.querySelector('[data-group="cough-context"].selected')
+  const sevEl    = document.querySelector('[data-group="cough-severity"].selected')
+  if (!typeEl) { alert('Please select a cough type.'); return }
+  coughEpisodes.push({
+    time:     time     || currentTime(),
+    type:     typeEl?.dataset.value  || '',
+    context:  ctxEl?.dataset.value   || '',
+    severity: sevEl?.dataset.value   || '',
+  })
+  renderCoughEpisodesList()
+  updateCoughBadge()
+  closeCoughSheet()
 }
 
 function stepCount(id, delta) {
@@ -576,6 +666,54 @@ function renderTrends() {
       },
     },
   })
+
+  // ── 1b. Cough Episodes (stacked bar by type) ─────────────────────────────
+  destroyChart('chart-cough')
+  el('chart-cough-wrap').innerHTML = '<canvas id="chart-cough"></canvas>'
+  const hasCoughData = recent.some(e => (e.cough_episodes || []).length > 0)
+  if (hasCoughData) {
+    charts['chart-cough'] = new Chart(el('chart-cough'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Dry',
+            data: recent.map(e => (e.cough_episodes || []).filter(ep => ep.type === 'Dry').length),
+            backgroundColor: 'rgba(59,130,246,0.85)',
+          },
+          {
+            label: 'Productive',
+            data: recent.map(e => (e.cough_episodes || []).filter(ep => ep.type === 'Productive').length),
+            backgroundColor: 'rgba(245,158,11,0.85)',
+          },
+          {
+            label: 'Post-drink',
+            data: recent.map(e => (e.cough_episodes || []).filter(ep => ep.type === 'Post-drink').length),
+            backgroundColor: 'rgba(16,185,129,0.85)',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+          x: { ...scaleX, stacked: true },
+          y: { ...scaleY, stacked: true, min: 0, ticks: { ...scaleY.ticks, stepSize: 1 } },
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { boxWidth: 14, font: { size: 11 }, color: '#6b7280' },
+          },
+        },
+      },
+    })
+  } else {
+    el('chart-cough-wrap').innerHTML = '<p class="text-center text-gray-400 text-sm py-8">No cough episodes recorded yet</p>'
+  }
 
   // ── 2. Weight ────────────────────────────────────────────────────────────
   destroyChart('chart-weight')

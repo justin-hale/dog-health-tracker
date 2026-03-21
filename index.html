@@ -157,8 +157,9 @@
       </div>
       <div class="grid grid-cols-2 gap-2">
         <label class="check-label" id="lbl-coughing">
-          <input type="checkbox" id="f-coughing" class="sr-only" onchange="updateCheck('coughing')">
+          <input type="checkbox" id="f-coughing" class="sr-only" onchange="updateCheck('coughing'); checkCoughing()">
           <span class="check-dot">○</span><span>Coughing today</span>
+          <span id="cough-episode-badge" class="ml-auto hidden items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-blue-500 text-white text-xs font-bold">0</span>
         </label>
         <label class="check-label" id="lbl-collapse">
           <input type="checkbox" id="f-collapse" class="sr-only" onchange="updateCheck('collapse'); checkCollapse()">
@@ -166,6 +167,13 @@
           <span>Collapse episode</span>
           <i class="fa-solid fa-circle-exclamation text-red-400 ml-auto text-xs"></i>
         </label>
+      </div>
+      <!-- Cough log section — shown when Coughing today is checked -->
+      <div id="cough-log-section" style="display:none;" class="mt-3">
+        <button class="btn-primary" onclick="openCoughSheet()">
+          <i class="fa-solid fa-plus mr-2"></i>Log a cough episode
+        </button>
+        <div id="cough-episodes-list" class="mt-2 space-y-1.5"></div>
       </div>
       <div id="collapse-field" style="display:none;" class="mt-3 space-y-2">
         <div class="grid grid-cols-2 gap-2">
@@ -454,6 +462,20 @@
         </span>
       </div>
       <div id="chart-rr-wrap"><canvas id="chart-rr"></canvas></div>
+    </div>
+
+    <!-- Cough Episodes -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-wind text-sky-500"></i>
+        Daily Cough Episodes (by type)
+      </div>
+      <div class="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs text-gray-500">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(59,130,246,0.85)"></span>Dry</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(245,158,11,0.85)"></span>Productive</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(16,185,129,0.85)"></span>Post-drink</span>
+      </div>
+      <div id="chart-cough-wrap"><canvas id="chart-cough"></canvas></div>
     </div>
 
     <!-- Weight -->
@@ -1052,6 +1074,60 @@
   <div class="max-w-lg mx-auto px-4 py-3">
     <button class="btn-primary w-full" id="save-btn" onclick="saveEntry()">
       <i class="fa-solid fa-floppy-disk mr-2"></i>Save Today's Log
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ COUGH BOTTOM SHEET -->
+<div id="cough-sheet" class="fixed inset-x-0 bottom-0 z-50" style="display:none;">
+  <div class="absolute inset-x-0 top-0 bottom-0 -z-10 translate-y-[-100vh] h-[200vh] bg-black/40" onclick="closeCoughSheet()"></div>
+  <div class="relative bg-white rounded-t-2xl shadow-2xl px-5 pt-5 pb-8 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-gray-800 text-base">Log Cough Episode</h3>
+      <button onclick="closeCoughSheet()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Time -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-1.5" for="cough-time">Time</label>
+      <input type="time" id="cough-time" class="form-input">
+    </div>
+
+    <!-- Type -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Type</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="cough-type" data-value="Dry" onclick="selectCoughToggle(this)">Dry</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-type" data-value="Productive" onclick="selectCoughToggle(this)">Productive</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-type" data-value="Post-drink" onclick="selectCoughToggle(this)">Post-drink</button>
+      </div>
+    </div>
+
+    <!-- Context -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Context</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="cough-pill-btn" data-group="cough-context" data-value="At rest" onclick="selectCoughToggle(this)">At rest</button>
+        <button class="cough-pill-btn" data-group="cough-context" data-value="After drinking" onclick="selectCoughToggle(this)">After drinking</button>
+        <button class="cough-pill-btn" data-group="cough-context" data-value="After activity" onclick="selectCoughToggle(this)">After activity</button>
+        <button class="cough-pill-btn" data-group="cough-context" data-value="Waking up" onclick="selectCoughToggle(this)">Waking up</button>
+      </div>
+    </div>
+
+    <!-- Severity -->
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Severity</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="cough-severity" data-value="Mild" onclick="selectCoughToggle(this)">Mild</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-severity" data-value="Moderate" onclick="selectCoughToggle(this)">Moderate</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-severity" data-value="Severe" onclick="selectCoughToggle(this)">Severe</button>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="logCoughEpisode()">
+      <i class="fa-solid fa-plus mr-2"></i>Add Episode
     </button>
   </div>
 </div>
