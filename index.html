@@ -104,37 +104,8 @@
         <i class="fa-solid fa-pills text-blue-500"></i>
         Medications Given
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">AM (~8–9 AM)</div>
-          <div class="flex flex-col gap-2">
-            <label class="check-label" id="lbl-pimo_am">
-              <input type="checkbox" id="f-pimo_am" class="sr-only" onchange="updateCheck('pimo_am')">
-              <span class="check-dot">○</span><span>Pimobendan</span>
-            </label>
-            <label class="check-label" id="lbl-enalapril">
-              <input type="checkbox" id="f-enalapril" class="sr-only" onchange="updateCheck('enalapril')">
-              <span class="check-dot">○</span><span>Enalapril</span>
-            </label>
-            <label class="check-label" id="lbl-furo_am">
-              <input type="checkbox" id="f-furo_am" class="sr-only" onchange="updateCheck('furo_am')">
-              <span class="check-dot">○</span><span>Furosemide</span>
-            </label>
-          </div>
-        </div>
-        <div>
-          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">PM (~8–9 PM)</div>
-          <div class="flex flex-col gap-2">
-            <label class="check-label" id="lbl-pimo_pm">
-              <input type="checkbox" id="f-pimo_pm" class="sr-only" onchange="updateCheck('pimo_pm')">
-              <span class="check-dot">○</span><span>Pimobendan</span>
-            </label>
-            <label class="check-label" id="lbl-furo_pm">
-              <input type="checkbox" id="f-furo_pm" class="sr-only" onchange="updateCheck('furo_pm')">
-              <span class="check-dot">○</span><span>Furosemide</span>
-            </label>
-          </div>
-        </div>
+      <div id="daily-meds-container">
+        <p class="text-sm text-gray-400 italic">Loading medications…</p>
       </div>
     </div>
 
@@ -536,8 +507,9 @@
       </div>
       <div class="hidden sm:flex gap-2 mb-1 px-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
         <span class="flex-1">Medication</span>
-        <span class="w-24">Dose</span>
-        <span class="w-28">Frequency</span>
+        <span class="w-20">Dose</span>
+        <span class="w-24">Frequency</span>
+        <span class="w-24">Timing</span>
         <span class="w-8"></span>
       </div>
       <div id="meds-table-body"></div>
