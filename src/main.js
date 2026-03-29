@@ -28,14 +28,14 @@ const DEFAULT_GIST_ID = '0373bd12fe6f428a93b3e69e05d46e13'
 const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-const CHECK_IDS = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm','coughing','collapse','wet_topper','vomiting','blood_urine']
+const CHECK_IDS = ['coughing','collapse','wet_topper','vomiting','blood_urine']
 const TEXT_IDS  = ['rr','rr_time','breathing_quality','appetite','food_am','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes']
-const MED_IDS   = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm']
+// Legacy field IDs kept only for computing med counts from old log entries
+const LEGACY_MED_IDS = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm']
 
 const DEFAULT_MEDS = [
-  { name: 'Pimobendan', dose: '', freq: 'twice daily' },
-  { name: 'Enalapril',  dose: '', freq: 'once daily'  },
-  { name: 'Furosemide', dose: '', freq: 'twice daily' },
+  { name: 'Pimobendan', dose: '', freq: 'twice daily', timing: 'both' },
+  { name: 'Furosemide', dose: '', freq: 'twice daily', timing: 'both' },
 ]
 
 const DEFAULT_VET_INFO = {
@@ -101,6 +101,25 @@ function escHtml(s) {
 
 function el(id) {
   return document.getElementById(id)
+}
+
+// Sanitize a medication name into a safe DOM ID fragment
+function medKey(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
+// Compute { given, total } med doses from a log entry (handles old + new format)
+function getMedCountForEntry(e) {
+  if (e.meds && Array.isArray(e.meds)) {
+    let given = 0, total = 0
+    e.meds.forEach(m => {
+      if (m.am !== undefined) { total++; if (m.am) given++ }
+      if (m.pm !== undefined) { total++; if (m.pm) given++ }
+    })
+    return { given, total }
+  }
+  const given = LEGACY_MED_IDS.filter(k => e[k]).length
+  return { given, total: LEGACY_MED_IDS.length }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -267,6 +286,8 @@ function getFormData() {
   data.cough_episodes = data.coughing ? [...coughEpisodes] : []
   // Include collapse episodes only if collapse was checked
   data.collapse_episodes = data.collapse ? [...collapseEpisodes] : []
+  // Dynamic medication tracking
+  data.meds = getMedFormData()
   return data
 }
 
@@ -296,6 +317,7 @@ function setFormData(data) {
   } else {
     collapseEpisodes = []
   }
+  setMedFormData(data.meds)
   checkRR()
   checkGums()
   checkBlood()
@@ -1102,9 +1124,13 @@ function renderTrends() {
       labels,
       datasets: [{
         label: 'Meds given (%)',
-        data: recent.map(e => Math.round((MED_IDS.filter(k => e[k]).length / 5) * 100)),
+        data: recent.map(e => {
+          const { given, total } = getMedCountForEntry(e)
+          return total > 0 ? Math.round((given / total) * 100) : 0
+        }),
         backgroundColor: recent.map(e => {
-          const pct = MED_IDS.filter(k => e[k]).length / 5
+          const { given, total } = getMedCountForEntry(e)
+          const pct = total > 0 ? given / total : 0
           return pct >= 1 ? 'rgba(22,163,74,0.7)' : pct >= 0.6 ? 'rgba(234,179,8,0.7)' : 'rgba(239,68,68,0.7)'
         }),
         borderWidth: 1,
@@ -1131,7 +1157,7 @@ function renderHistory() {
     const rrBadge       = e.rr       ? `<span class="badge ${rrNum >= 30 ? 'badge-rr-warn' : 'badge-rr-ok'}">RR ${e.rr} bpm</span>` : ''
     const wtBadge       = e.weight   ? `<span class="badge badge-weight">${e.weight} lbs</span>` : ''
     const collapseBadge = e.collapse ? `<span class="badge badge-collapse"><i class="fa-solid fa-person-falling mr-1"></i>Collapse</span>` : ''
-    const medCount = MED_IDS.filter(k => e[k]).length
+    const { given: medGiven, total: medTotal } = getMedCountForEntry(e)
 
     const rows = [
       e.appetite          ? ['Appetite',  e.appetite.split('—')[0].trim()]  : null,
@@ -1141,7 +1167,7 @@ function renderHistory() {
       e.straining         ? ['Straining', e.straining]                      : null,
       e.gum_color         ? ['Gums',      e.gum_color]                      : null,
       e.stool_quality     ? ['Stool',     e.stool_quality]                  : null,
-      ['Meds', `${medCount}/5`],
+      medTotal > 0 ? ['Meds', `${medGiven}/${medTotal}`] : null,
     ].filter(Boolean)
 
     return `
@@ -1202,12 +1228,12 @@ function exportCSV() {
   if (!log.length) { alert('No entries to export yet.'); return }
 
   const keys = [
-    'date','pimo_am','pimo_pm','enalapril','furo_am','furo_pm',
+    'date','meds',
     'rr','rr_time','breathing_quality',
     'coughing','cough_count','cough_episodes',
     'collapse','collapse_count','collapse_episodes',
-    'appetite','food_am','food_mid','food_pm','water_intake',
-    'wet_topper','fish_oil','sardines','vomiting',
+    'appetite','food_am','food_pm','water_intake',
+    'wet_topper','vomiting',
     'urination_count','urine_color','urination_quality','straining','blood_urine',
     'bowel_count','stool_quality','energy','gum_color','weight','notes',
   ]
@@ -1226,6 +1252,12 @@ function exportCSV() {
       if (k === 'cough_episodes')    return csvCell(JSON.stringify(coughEps))
       if (k === 'collapse_count')    return collapseEps.length
       if (k === 'collapse_episodes') return csvCell(JSON.stringify(collapseEps))
+      if (k === 'meds') {
+        // New format: serialize array; legacy format: summarize old boolean fields
+        if (Array.isArray(e.meds)) return csvCell(JSON.stringify(e.meds))
+        const legacyGiven = LEGACY_MED_IDS.filter(id => e[id]).join(';')
+        return csvCell(legacyGiven)
+      }
       return csvCell(e[k] ?? '')
     }).join(',')
   })
@@ -1323,6 +1355,95 @@ function copyShareLink() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Daily log — dynamic medication checkboxes
+// ─────────────────────────────────────────────────────────────────────────────
+
+function syncDynMedCheck(input) {
+  const lbl = input.closest('label')
+  if (!lbl) return
+  const dot = lbl.querySelector('.check-dot')
+  lbl.className = 'check-label' + (input.checked ? ' checked' : '')
+  if (dot) dot.textContent = input.checked ? '✓' : '○'
+}
+
+function renderDailyMeds() {
+  const container = el('daily-meds-container')
+  if (!container) return
+  const meds = (vetInfo.medications || []).filter(m => m.name)
+  if (!meds.length) {
+    container.innerHTML = '<p class="text-sm text-gray-400 italic">No medications configured — add them in the Vet Info tab.</p>'
+    return
+  }
+
+  const amMeds = meds.filter(m => (m.timing || 'both') !== 'pm')
+  const pmMeds = meds.filter(m => (m.timing || 'both') !== 'am')
+
+  const renderCb = (m, time) => {
+    const id = `dmed-${medKey(m.name)}-${time}`
+    return `
+      <label class="check-label" id="lbl-${id}">
+        <input type="checkbox" id="${id}" class="sr-only" onchange="syncDynMedCheck(this)">
+        <span class="check-dot">○</span><span>${escHtml(m.name)}</span>
+      </label>`
+  }
+
+  if (amMeds.length && pmMeds.length) {
+    container.innerHTML = `
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">AM (~8–9 AM)</div>
+          <div class="flex flex-col gap-2">${amMeds.map(m => renderCb(m, 'am')).join('')}</div>
+        </div>
+        <div>
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">PM (~8–9 PM)</div>
+          <div class="flex flex-col gap-2">${pmMeds.map(m => renderCb(m, 'pm')).join('')}</div>
+        </div>
+      </div>`
+  } else if (amMeds.length) {
+    container.innerHTML = `<div class="flex flex-col gap-2">${amMeds.map(m => renderCb(m, 'am')).join('')}</div>`
+  } else {
+    container.innerHTML = `<div class="flex flex-col gap-2">${pmMeds.map(m => renderCb(m, 'pm')).join('')}</div>`
+  }
+}
+
+function getMedFormData() {
+  const meds = (vetInfo.medications || []).filter(m => m.name)
+  return meds.map(m => {
+    const k = medKey(m.name)
+    const timing = m.timing || 'both'
+    const result = { name: m.name }
+    if (timing !== 'pm') result.am = el(`dmed-${k}-am`)?.checked || false
+    if (timing !== 'am') result.pm = el(`dmed-${k}-pm`)?.checked || false
+    return result
+  })
+}
+
+function setMedFormData(savedMeds) {
+  // Clear all current dynamic checkboxes first
+  const currentMeds = (vetInfo.medications || []).filter(m => m.name)
+  currentMeds.forEach(m => {
+    const k = medKey(m.name)
+    ;[`dmed-${k}-am`, `dmed-${k}-pm`].forEach(id => {
+      const inp = el(id)
+      if (inp) { inp.checked = false; syncDynMedCheck(inp) }
+    })
+  })
+  if (!savedMeds || !Array.isArray(savedMeds)) return
+  savedMeds.forEach(saved => {
+    const k = medKey(saved.name)
+    if (saved.am !== undefined) {
+      const inp = el(`dmed-${k}-am`)
+      if (inp) { inp.checked = !!saved.am; syncDynMedCheck(inp) }
+    }
+    if (saved.pm !== undefined) {
+      const inp = el(`dmed-${k}-pm`)
+      if (inp) { inp.checked = !!saved.pm; syncDynMedCheck(inp) }
+    }
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Vet info — medications table
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1337,14 +1458,26 @@ function collectVetInfoForm() {
   }
 }
 
+function timingSelect(selected) {
+  const opts = [
+    ['both', 'AM & PM'],
+    ['am',   'AM only'],
+    ['pm',   'PM only'],
+  ]
+  return `<select class="med-timing form-input w-24 shrink-0">${
+    opts.map(([v, l]) => `<option value="${v}"${selected === v ? ' selected' : ''}>${l}</option>`).join('')
+  }</select>`
+}
+
 function renderMedsTable(meds) {
   const body = el('meds-table-body')
   if (!body) return
   body.innerHTML = (meds || []).map((m, i) => `
     <div class="med-row flex gap-2 items-center mb-2" data-idx="${i}">
       <input type="text" class="med-name form-input flex-1 min-w-0" value="${escHtml(m.name)}" placeholder="Medication name">
-      <input type="text" class="med-dose form-input w-24 shrink-0" value="${escHtml(m.dose)}" placeholder="Dose">
-      <input type="text" class="med-freq form-input w-28 shrink-0" value="${escHtml(m.freq)}" placeholder="Frequency">
+      <input type="text" class="med-dose form-input w-20 shrink-0" value="${escHtml(m.dose)}" placeholder="Dose">
+      <input type="text" class="med-freq form-input w-24 shrink-0" value="${escHtml(m.freq)}" placeholder="Frequency">
+      ${timingSelect(m.timing || 'both')}
       <button class="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0" onclick="delMedRow(this)" title="Remove">
         <i class="fa-solid fa-trash-can text-xs"></i>
       </button>
@@ -1357,8 +1490,9 @@ function addMedRow() {
   div.className = 'med-row flex gap-2 items-center mb-2'
   div.innerHTML = `
     <input type="text" class="med-name form-input flex-1 min-w-0" placeholder="Medication name">
-    <input type="text" class="med-dose form-input w-24 shrink-0" placeholder="Dose">
-    <input type="text" class="med-freq form-input w-28 shrink-0" placeholder="Frequency">
+    <input type="text" class="med-dose form-input w-20 shrink-0" placeholder="Dose">
+    <input type="text" class="med-freq form-input w-24 shrink-0" placeholder="Frequency">
+    ${timingSelect('both')}
     <button class="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0" onclick="delMedRow(this)" title="Remove">
       <i class="fa-solid fa-trash-can text-xs"></i>
     </button>`
@@ -1372,9 +1506,10 @@ function delMedRow(btn) {
 
 function collectMeds() {
   return Array.from(document.querySelectorAll('#meds-table-body .med-row')).map(row => ({
-    name: row.querySelector('.med-name').value.trim(),
-    dose: row.querySelector('.med-dose').value.trim(),
-    freq: row.querySelector('.med-freq').value.trim(),
+    name:   row.querySelector('.med-name').value.trim(),
+    dose:   row.querySelector('.med-dose').value.trim(),
+    freq:   row.querySelector('.med-freq').value.trim(),
+    timing: row.querySelector('.med-timing').value || 'both',
   })).filter(m => m.name)
 }
 
@@ -1397,6 +1532,9 @@ async function saveVetInfo() {
     btn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i>Save Vet Info'
     btn.classList.remove('saved')
   }, 2500)
+
+  // Re-render medication checkboxes in the Today pane with updated list
+  renderDailyMeds()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1529,6 +1667,7 @@ function showCollapseDay(dateStr) {
   el('f-date').value = today()
   await loadLog()
   if (!Object.keys(vetInfo).length) vetInfo = { ...DEFAULT_VET_INFO }
+  renderDailyMeds()
   const todayEntry = log.find(e => e.date === today())
   setFormData(todayEntry ?? { date: today(), ...DEFAULT_ENTRY })
 })()
@@ -1554,6 +1693,7 @@ Object.assign(window, {
   addMedRow,
   delMedRow,
   saveVetInfo,
+  syncDynMedCheck,
   saveVetNote,
   updateCheck,
   checkRR,
