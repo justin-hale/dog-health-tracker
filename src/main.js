@@ -715,7 +715,7 @@ function switchTab(tab) {
     el('pane-' + t).style.display = tab === t ? 'block' : 'none'
     el('tab-'  + t).className     = 'tab ' + (tab === t ? 'active' : 'inactive')
   })
-  el('save-footer').style.display = tab === 'today' ? 'block' : 'none'
+  const footer = el('save-footer'); if (footer) footer.style.display = tab === 'today' ? 'block' : 'none'
   if (tab === 'trends')    renderTrends()
   if (tab === 'history')   renderHistory()
   if (tab === 'vetinfo')   populateVetInfoForm()
