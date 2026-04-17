@@ -800,12 +800,64 @@ function renderHistory() {
 
 function exportCSV() {
   if (!log.length) { alert('No entries to export yet.'); return }
-  const keys = ['date','pimo_am','pimo_pm','enalapril','furo_am','furo_pm','rr','rr_time','breathing_quality','coughing','collapse','collapse_trigger','collapse_duration','collapse_behavior','collapse_consciousness','collapse_recovery','appetite','food_am','food_mid','food_pm','water_intake','wet_topper','fish_oil','sardines','vomiting','urination_count','urine_color','urination_quality','straining','blood_urine','bowel_count','stool_quality','energy','gum_color','weight','notes']
-  const rows = log.map(e => keys.map(k => {
-    const v = e[k] ?? ''
-    return String(v).includes(',') ? `"${v}"` : v
-  }).join(','))
-  const csv = [keys.join(','), ...rows].join('\n')
+
+  const MED_NAMES = {
+    pimo_am:   'Pimobendan (AM)',
+    enalapril: 'Enalapril',
+    furo_am:   'Furosemide (AM)',
+    pimo_pm:   'Pimobendan (PM)',
+    furo_pm:   'Furosemide (PM)',
+  }
+
+  const headers = [
+    'Date', 'Medications Taken', 'Respiratory Rate (bpm)', 'Breathing Quality',
+    'Coughing', 'Collapse Episode Details',
+    'Appetite', 'Water Intake',
+    'Urination Count', 'Urine Color', 'Urination Quality', 'Straining',
+    'Bowel Count', 'Stool Quality',
+    'Energy', 'Gum Color', 'Weight (lbs)', 'Notes',
+  ]
+
+  const rows = log.map(e => {
+    const meds = Object.entries(MED_NAMES)
+      .filter(([k]) => e[k])
+      .map(([, name]) => name)
+      .join(' | ') || 'None given'
+
+    const collapseParts = [
+      e.collapse_trigger      && `Trigger: ${e.collapse_trigger}`,
+      e.collapse_duration     && `Duration: ${e.collapse_duration}`,
+      e.collapse_behavior     && `Behavior: ${e.collapse_behavior}`,
+      e.collapse_consciousness && `Consciousness: ${e.collapse_consciousness}`,
+      e.collapse_recovery     && `Recovery: ${e.collapse_recovery}`,
+    ].filter(Boolean)
+    const collapseDetails = collapseParts.join(' | ')
+
+    const vals = [
+      e.date,
+      meds,
+      e.rr || '',
+      e.breathing_quality || '',
+      e.coughing ? 'Yes' : '',
+      collapseDetails,
+      e.appetite || '',
+      e.water_intake || '',
+      e.urination_count || '',
+      e.urine_color || '',
+      e.urination_quality || '',
+      e.straining || '',
+      e.bowel_count || '',
+      e.stool_quality || '',
+      e.energy || '',
+      e.gum_color || '',
+      e.weight || '',
+      e.notes || '',
+    ]
+
+    return vals.map(v => String(v).includes(',') ? `"${v}"` : v).join(',')
+  })
+
+  const csv = [headers.join(','), ...rows].join('\n')
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
   const a   = Object.assign(document.createElement('a'), { href: url, download: `gizmo-log-${today()}.csv` })
   a.click()
