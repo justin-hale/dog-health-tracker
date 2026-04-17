@@ -34,12 +34,36 @@ const TEXT_IDS  = ['rr','rr_time','breathing_quality','appetite','food_am','food
 const LEGACY_MED_IDS = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm']
 
 const DEFAULT_MEDS = [
-  { name: 'Pimobendan', dose: '', freq: 'twice daily', timing: 'both' },
-  { name: 'Furosemide', dose: '', freq: 'twice daily', timing: 'both' },
+  { name: 'Furosemide',  dose: '', freq: 2 },
+  { name: 'Sildenafil',  dose: '', freq: 3 },
+]
+
+const DEFAULT_CARE_GUIDE = [
+  {
+    title: 'Daily Schedule',
+    icon: 'fa-clock',
+    body: 'Anytime (while sleeping): Check Resting Respiratory Rate — count breaths for 30 seconds × 2. Under 30 = normal. 30-40 = call owner. Over 40 = ER immediately.\n\nMorning medications: Give all medications hidden in a small treat. Check med list for timing.\n\nEvening medications: Repeat as directed per medication frequency.',
+  },
+  {
+    title: 'Feeding Guide',
+    icon: 'fa-bowl-food',
+    body: 'Two meals per day. Food is soaked overnight.\n\nPrep: Night before — soak 1 cup dry kibble (Kirkland, red bag) in plain water. Refrigerate overnight. No broth — high sodium is dangerous.\n\nEach meal: 1/2 cup soaked kibble + 2 spoons Kirkland wet food (pink can) on top. Always keep fresh water available. Refrigerate unused wet food.',
+  },
+  {
+    title: "What's Normal",
+    icon: 'fa-circle-info',
+    body: "Frequent urination — he takes a diuretic. He may try to mark several dry spots before producing a stream. This is expected.\n\nResting more than a young dog — normal for his age and condition.\n\nGood days: interested in food, alert, wants interaction.\nBad days: very lethargic, not interested in food — call owner.\n\nSafe treats: plain boiled chicken, plain scrambled eggs, baby carrots, blueberries, plain pumpkin.\nNever give: deli meats, grain-free food, high-sodium treats, xylitol (toxic).",
+  },
+  {
+    title: 'Emergency Signs — Go to ER',
+    icon: 'fa-circle-exclamation',
+    body: 'Call owner immediately for any of these:\n• Resting breathing rate over 30/min\n• Gums pale, white, blue, or gray\n• Collapse or inability to stand\n• Labored or very rapid breathing\n• Refusing food for more than one meal\n\nDo not wait. Call the 24hr ER vet directly if you cannot reach the owner.',
+  },
 ]
 
 const DEFAULT_VET_INFO = {
   medications: DEFAULT_MEDS,
+  careGuide: DEFAULT_CARE_GUIDE,
   vetNotes: [],
 }
 
@@ -113,8 +137,13 @@ function getMedCountForEntry(e) {
   if (e.meds && Array.isArray(e.meds)) {
     let given = 0, total = 0
     e.meds.forEach(m => {
-      if (m.am !== undefined) { total++; if (m.am) given++ }
-      if (m.pm !== undefined) { total++; if (m.pm) given++ }
+      if (Array.isArray(m.doses)) {
+        total += m.doses.length
+        given += m.doses.filter(Boolean).length
+      } else {
+        if (m.am !== undefined) { total++; if (m.am) given++ }
+        if (m.pm !== undefined) { total++; if (m.pm) given++ }
+      }
     })
     return { given, total }
   }
@@ -687,10 +716,11 @@ function switchTab(tab) {
     el('tab-'  + t).className     = 'tab ' + (tab === t ? 'active' : 'inactive')
   })
   el('save-footer').style.display = tab === 'today' ? 'block' : 'none'
-  if (tab === 'trends')   renderTrends()
-  if (tab === 'history')  renderHistory()
-  if (tab === 'vetinfo')  populateVetInfoForm()
-  if (tab === 'vetnotes') { renderVetNotes(); el('vn-date').value = today() }
+  if (tab === 'trends')    renderTrends()
+  if (tab === 'history')   renderHistory()
+  if (tab === 'vetinfo')   populateVetInfoForm()
+  if (tab === 'vetnotes')  { renderVetNotes(); el('vn-date').value = today() }
+  if (tab === 'careguide') renderCareguide()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1237,13 +1267,17 @@ function exportCSV() {
     if (Array.isArray(e.meds)) {
       const parts = []
       e.meds.forEach(m => {
-        if (m.am) parts.push(`${m.name} (AM)`)
-        if (m.pm) parts.push(`${m.name} (PM)`)
-        if (m.am === undefined && m.pm === undefined && m.name) parts.push(m.name)
+        if (Array.isArray(m.doses)) {
+          m.doses.forEach((given, i) => { if (given) parts.push(`${m.name}(${i + 1})`) })
+        } else {
+          if (m.am) parts.push(`${m.name}(1)`)
+          if (m.pm) parts.push(`${m.name}(2)`)
+          if (m.am === undefined && m.pm === undefined && m.name) parts.push(m.name)
+        }
       })
       return parts.join(' | ') || 'None given'
     }
-    const LEGACY = { pimo_am: 'Pimobendan (AM)', enalapril: 'Enalapril', furo_am: 'Furosemide (AM)', pimo_pm: 'Pimobendan (PM)', furo_pm: 'Furosemide (PM)' }
+    const LEGACY = { pimo_am: 'Pimobendan(1)', enalapril: 'Enalapril(1)', furo_am: 'Furosemide(1)', pimo_pm: 'Pimobendan(2)', furo_pm: 'Furosemide(2)' }
     return Object.entries(LEGACY).filter(([k]) => e[k]).map(([, name]) => name).join(' | ') || 'None given'
   }
 
@@ -1414,69 +1448,55 @@ function renderDailyMeds() {
     return
   }
 
-  const amMeds = meds.filter(m => (m.timing || 'both') !== 'pm')
-  const pmMeds = meds.filter(m => (m.timing || 'both') !== 'am')
-
-  const renderCb = (m, time) => {
-    const id = `dmed-${medKey(m.name)}-${time}`
+  const renderDose = (m, idx) => {
+    const id = `dmed-${medKey(m.name)}-${idx}`
     return `
       <label class="check-label" id="lbl-${id}">
         <input type="checkbox" id="${id}" class="sr-only" onchange="syncDynMedCheck(this)">
-        <span class="check-dot">○</span><span>${escHtml(m.name)}</span>
+        <span class="check-dot">○</span><span>${escHtml(m.name)}(${idx})</span>
       </label>`
   }
 
-  if (amMeds.length && pmMeds.length) {
-    container.innerHTML = `
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">AM (~8–9 AM)</div>
-          <div class="flex flex-col gap-2">${amMeds.map(m => renderCb(m, 'am')).join('')}</div>
-        </div>
-        <div>
-          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">PM (~8–9 PM)</div>
-          <div class="flex flex-col gap-2">${pmMeds.map(m => renderCb(m, 'pm')).join('')}</div>
-        </div>
-      </div>`
-  } else if (amMeds.length) {
-    container.innerHTML = `<div class="flex flex-col gap-2">${amMeds.map(m => renderCb(m, 'am')).join('')}</div>`
-  } else {
-    container.innerHTML = `<div class="flex flex-col gap-2">${pmMeds.map(m => renderCb(m, 'pm')).join('')}</div>`
-  }
+  const checks = meds.flatMap(m => {
+    const freq = parseInt(m.freq) || (m.timing === 'am' || m.timing === 'pm' ? 1 : 2)
+    return Array.from({ length: freq }, (_, i) => renderDose(m, i + 1))
+  })
+
+  container.innerHTML = `<div class="flex flex-col gap-2">${checks.join('')}</div>`
 }
 
 function getMedFormData() {
   const meds = (vetInfo.medications || []).filter(m => m.name)
   return meds.map(m => {
-    const k = medKey(m.name)
-    const timing = m.timing || 'both'
-    const result = { name: m.name }
-    if (timing !== 'pm') result.am = el(`dmed-${k}-am`)?.checked || false
-    if (timing !== 'am') result.pm = el(`dmed-${k}-pm`)?.checked || false
-    return result
+    const freq = parseInt(m.freq) || (m.timing === 'am' || m.timing === 'pm' ? 1 : 2)
+    const doses = Array.from({ length: freq }, (_, i) =>
+      el(`dmed-${medKey(m.name)}-${i + 1}`)?.checked || false
+    )
+    return { name: m.name, doses }
   })
 }
 
 function setMedFormData(savedMeds) {
-  // Clear all current dynamic checkboxes first
   const currentMeds = (vetInfo.medications || []).filter(m => m.name)
   currentMeds.forEach(m => {
-    const k = medKey(m.name)
-    ;[`dmed-${k}-am`, `dmed-${k}-pm`].forEach(id => {
-      const inp = el(id)
+    const freq = parseInt(m.freq) || 2
+    for (let i = 1; i <= freq; i++) {
+      const inp = el(`dmed-${medKey(m.name)}-${i}`)
       if (inp) { inp.checked = false; syncDynMedCheck(inp) }
-    })
+    }
   })
   if (!savedMeds || !Array.isArray(savedMeds)) return
   savedMeds.forEach(saved => {
     const k = medKey(saved.name)
-    if (saved.am !== undefined) {
-      const inp = el(`dmed-${k}-am`)
-      if (inp) { inp.checked = !!saved.am; syncDynMedCheck(inp) }
-    }
-    if (saved.pm !== undefined) {
-      const inp = el(`dmed-${k}-pm`)
-      if (inp) { inp.checked = !!saved.pm; syncDynMedCheck(inp) }
+    if (Array.isArray(saved.doses)) {
+      saved.doses.forEach((given, i) => {
+        const inp = el(`dmed-${k}-${i + 1}`)
+        if (inp) { inp.checked = !!given; syncDynMedCheck(inp) }
+      })
+    } else {
+      // Legacy am/pm format
+      if (saved.am !== undefined) { const inp = el(`dmed-${k}-1`); if (inp) { inp.checked = !!saved.am; syncDynMedCheck(inp) } }
+      if (saved.pm !== undefined) { const inp = el(`dmed-${k}-2`); if (inp) { inp.checked = !!saved.pm; syncDynMedCheck(inp) } }
     }
   })
 }
@@ -1492,18 +1512,14 @@ function populateVetInfoForm() {
 function collectVetInfoForm() {
   return {
     medications: collectMeds(),
+    careGuide: vetInfo.careGuide || DEFAULT_CARE_GUIDE,
     vetNotes: vetInfo.vetNotes || [],
   }
 }
 
-function timingSelect(selected) {
-  const opts = [
-    ['both', 'AM & PM'],
-    ['am',   'AM only'],
-    ['pm',   'PM only'],
-  ]
-  return `<select class="med-timing form-input w-24 shrink-0">${
-    opts.map(([v, l]) => `<option value="${v}"${selected === v ? ' selected' : ''}>${l}</option>`).join('')
+function freqSelect(selected) {
+  return `<select class="med-freq form-input w-20 shrink-0">${
+    [1,2,3,4,5,6].map(n => `<option value="${n}"${selected == n ? ' selected' : ''}>${n}×/day</option>`).join('')
   }</select>`
 }
 
@@ -1514,8 +1530,7 @@ function renderMedsTable(meds) {
     <div class="med-row flex gap-2 items-center mb-2" data-idx="${i}">
       <input type="text" class="med-name form-input flex-1 min-w-0" value="${escHtml(m.name)}" placeholder="Medication name">
       <input type="text" class="med-dose form-input w-20 shrink-0" value="${escHtml(m.dose)}" placeholder="Dose">
-      <input type="text" class="med-freq form-input w-24 shrink-0" value="${escHtml(m.freq)}" placeholder="Frequency">
-      ${timingSelect(m.timing || 'both')}
+      ${freqSelect(m.freq || 2)}
       <button class="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0" onclick="delMedRow(this)" title="Remove">
         <i class="fa-solid fa-trash-can text-xs"></i>
       </button>
@@ -1529,8 +1544,7 @@ function addMedRow() {
   div.innerHTML = `
     <input type="text" class="med-name form-input flex-1 min-w-0" placeholder="Medication name">
     <input type="text" class="med-dose form-input w-20 shrink-0" placeholder="Dose">
-    <input type="text" class="med-freq form-input w-24 shrink-0" placeholder="Frequency">
-    ${timingSelect('both')}
+    ${freqSelect(2)}
     <button class="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0" onclick="delMedRow(this)" title="Remove">
       <i class="fa-solid fa-trash-can text-xs"></i>
     </button>`
@@ -1544,10 +1558,9 @@ function delMedRow(btn) {
 
 function collectMeds() {
   return Array.from(document.querySelectorAll('#meds-table-body .med-row')).map(row => ({
-    name:   row.querySelector('.med-name').value.trim(),
-    dose:   row.querySelector('.med-dose').value.trim(),
-    freq:   row.querySelector('.med-freq').value.trim(),
-    timing: row.querySelector('.med-timing').value || 'both',
+    name: row.querySelector('.med-name').value.trim(),
+    dose: row.querySelector('.med-dose').value.trim(),
+    freq: parseInt(row.querySelector('.med-freq').value) || 2,
   })).filter(m => m.name)
 }
 
@@ -1711,6 +1724,82 @@ function showCollapseDay(dateStr) {
 })()
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Care guide
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderCareguide() {
+  const cont = el('careguide-sections')
+  if (!cont) return
+  const sections = vetInfo.careGuide?.length ? vetInfo.careGuide : DEFAULT_CARE_GUIDE
+
+  const medsHtml = (() => {
+    const meds = (vetInfo.medications || []).filter(m => m.name)
+    if (!meds.length) return '<p class="text-sm text-gray-400 italic">No medications configured.</p>'
+    return meds.map(m => {
+      const freq = parseInt(m.freq) || 2
+      const doses = Array.from({ length: freq }, (_, i) => `<span class="inline-block px-2 py-0.5 bg-violet-100 text-violet-700 text-xs rounded-full font-semibold">${m.name}(${i + 1})</span>`).join(' ')
+      return `<div class="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 mb-2">
+        <i class="fa-solid fa-pills text-violet-500 mt-0.5 shrink-0"></i>
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-gray-900 text-sm">${escHtml(m.name)}${m.dose ? ` <span class="font-normal text-gray-500">${escHtml(m.dose)}</span>` : ''}</div>
+          <div class="mt-1 flex flex-wrap gap-1">${doses}</div>
+        </div>
+      </div>`
+    }).join('')
+  })()
+
+  const sectionHtml = sections.map((s, i) => `
+    <div class="section-card" id="cg-section-${i}">
+      <div class="section-title justify-between">
+        <span class="flex items-center gap-2"><i class="fa-solid ${escHtml(s.icon || 'fa-circle-info')} text-blue-500"></i>${escHtml(s.title)}</span>
+        <button onclick="editCareguideSection(${i})" class="text-xs text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-1">
+          <i class="fa-solid fa-pen-to-square"></i> Edit
+        </button>
+      </div>
+      <div class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">${escHtml(s.body)}</div>
+    </div>`).join('')
+
+  cont.innerHTML = `
+    <div class="section-card">
+      <div class="section-title justify-between">
+        <span class="flex items-center gap-2"><i class="fa-solid fa-pills text-violet-500"></i>Current Medications</span>
+      </div>
+      ${medsHtml}
+      <p class="text-xs text-gray-400 mt-2 italic">Update medications in the Vet Info tab.</p>
+    </div>
+    ${sectionHtml}`
+}
+
+function editCareguideSection(idx) {
+  const sections = vetInfo.careGuide?.length ? vetInfo.careGuide : DEFAULT_CARE_GUIDE
+  const s = sections[idx]
+  if (!s) return
+  const card = el(`cg-section-${idx}`)
+  if (!card) return
+  card.innerHTML = `
+    <div class="section-title"><i class="fa-solid ${escHtml(s.icon || 'fa-circle-info')} text-blue-500"></i>${escHtml(s.title)}</div>
+    <textarea id="cg-edit-${idx}" class="form-input w-full mt-1 text-sm" rows="8">${escHtml(s.body)}</textarea>
+    <div class="flex gap-2 mt-2">
+      <button onclick="saveCareguideSection(${idx})" class="btn-primary text-sm py-1.5">Save</button>
+      <button onclick="renderCareguide()" class="btn-secondary text-sm py-1.5">Cancel</button>
+    </div>`
+  el(`cg-edit-${idx}`)?.focus()
+}
+
+async function saveCareguideSection(idx) {
+  const sections = vetInfo.careGuide?.length
+    ? vetInfo.careGuide.map(s => ({ ...s }))
+    : DEFAULT_CARE_GUIDE.map(s => ({ ...s }))
+  const textarea = el(`cg-edit-${idx}`)
+  if (!textarea || !sections[idx]) return
+  sections[idx].body = textarea.value
+  vetInfo.careGuide = sections
+  localInfoWrite()
+  await gistPatch()
+  renderCareguide()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Expose to global scope for inline HTML event handlers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1758,4 +1847,7 @@ Object.assign(window, {
   startRRTimer,
   resetRRTimer,
   stepRRBreaths,
+  editCareguideSection,
+  saveCareguideSection,
+  renderCareguide,
 })
