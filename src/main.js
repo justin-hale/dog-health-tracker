@@ -28,14 +28,14 @@ const DEFAULT_GIST_ID = '0373bd12fe6f428a93b3e69e05d46e13'
 const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-const CHECK_IDS = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm','coughing','collapse','wet_topper','vomiting','blood_urine']
-const TEXT_IDS  = ['rr','rr_time','breathing_quality','appetite','food_am','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes','collapse_trigger','collapse_duration','collapse_behavior','collapse_consciousness','collapse_recovery']
-const MED_IDS   = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm']
+const CHECK_IDS = ['coughing','collapse','wet_topper','vomiting','blood_urine']
+const TEXT_IDS  = ['rr','rr_time','breathing_quality','appetite','food_am','food_pm','water_intake','urination_count','urine_color','urination_quality','straining','bowel_count','stool_quality','energy','gum_color','weight','notes']
+// Legacy field IDs kept only for computing med counts from old log entries
+const LEGACY_MED_IDS = ['pimo_am','pimo_pm','enalapril','furo_am','furo_pm']
 
 const DEFAULT_MEDS = [
-  { name: 'Pimobendan', dose: '', freq: 'twice daily' },
-  { name: 'Enalapril',  dose: '', freq: 'once daily'  },
-  { name: 'Furosemide', dose: '', freq: 'twice daily' },
+  { name: 'Pimobendan', dose: '', freq: 'twice daily', timing: 'both' },
+  { name: 'Furosemide', dose: '', freq: 'twice daily', timing: 'both' },
 ]
 
 const DEFAULT_VET_INFO = {
@@ -59,10 +59,18 @@ const DEFAULT_ENTRY = {
 // State
 // ─────────────────────────────────────────────────────────────────────────────
 
-let log     = []
-let vetInfo = {}
-let cfg     = { gistId: '', token: '' }
+let log              = []
+let vetInfo          = {}
+let cfg              = { gistId: '', token: '' }
+let coughEpisodes    = []   // episodes for the currently-displayed date
+let collapseEpisodes = []
 const charts = {}
+
+// RR counter sheet state
+let rrTimerInterval = null
+let rrSecondsLeft   = 60
+let rrBreathCount   = 0
+let rrTimerRunning  = false
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilities
@@ -93,6 +101,25 @@ function escHtml(s) {
 
 function el(id) {
   return document.getElementById(id)
+}
+
+// Sanitize a medication name into a safe DOM ID fragment
+function medKey(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+}
+
+// Compute { given, total } med doses from a log entry (handles old + new format)
+function getMedCountForEntry(e) {
+  if (e.meds && Array.isArray(e.meds)) {
+    let given = 0, total = 0
+    e.meds.forEach(m => {
+      if (m.am !== undefined) { total++; if (m.am) given++ }
+      if (m.pm !== undefined) { total++; if (m.pm) given++ }
+    })
+    return { given, total }
+  }
+  const given = LEGACY_MED_IDS.filter(k => e[k]).length
+  return { given, total: LEGACY_MED_IDS.length }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -255,6 +282,12 @@ function getFormData() {
   if (!(parseInt(data.bowel_count) >= 1)) {
     data.bowel_count = data.stool_quality = ''
   }
+  // Include cough episodes only if coughing was checked
+  data.cough_episodes = data.coughing ? [...coughEpisodes] : []
+  // Include collapse episodes only if collapse was checked
+  data.collapse_episodes = data.collapse ? [...collapseEpisodes] : []
+  // Dynamic medication tracking
+  data.meds = getMedFormData()
   return data
 }
 
@@ -268,11 +301,29 @@ function setFormData(data) {
     const input = el('f-' + id)
     if (input) { input.checked = !!data[id]; syncCheckLabel(id, !!data[id]) }
   })
+  coughEpisodes = Array.isArray(data?.cough_episodes) ? [...data.cough_episodes] : []
+  // Restore collapse episodes; migrate legacy single-field entries
+  if (Array.isArray(data?.collapse_episodes) && data.collapse_episodes.length) {
+    collapseEpisodes = [...data.collapse_episodes]
+  } else if (data?.collapse && (data.collapse_trigger || data.collapse_duration || data.collapse_behavior)) {
+    collapseEpisodes = [{
+      time:          '',
+      trigger:       data.collapse_trigger       || '',
+      duration:      data.collapse_duration      || '',
+      behavior:      data.collapse_behavior      || '',
+      consciousness: data.collapse_consciousness || '',
+      recovery:      data.collapse_recovery      || '',
+    }]
+  } else {
+    collapseEpisodes = []
+  }
+  setMedFormData(data.meds)
   checkRR()
   checkGums()
   checkBlood()
   checkStraining()
   checkCollapse()
+  checkCoughing()
   syncSteppers()
 }
 
@@ -308,6 +359,71 @@ function checkRR() {
     alert.innerHTML = ''
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RR counter sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+function openRRSheet() {
+  resetRRTimer()
+  el('rr-sheet').style.display = 'block'
+}
+
+function closeRRSheet() {
+  clearInterval(rrTimerInterval)
+  rrTimerInterval = null
+  rrTimerRunning  = false
+  el('rr-sheet').style.display = 'none'
+}
+
+function startRRTimer() {
+  if (rrTimerRunning) return
+  rrTimerRunning = true
+  const startBtn = el('rr-start-btn')
+  startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Counting…'
+  startBtn.disabled  = true
+  rrTimerInterval = setInterval(() => {
+    rrSecondsLeft--
+    const countdown = el('rr-countdown')
+    countdown.textContent = rrSecondsLeft
+    if (rrSecondsLeft <= 10) countdown.classList.add('text-rose-500')
+    if (rrSecondsLeft <= 0) {
+      clearInterval(rrTimerInterval)
+      rrTimerInterval = null
+      rrTimerRunning  = false
+      // Fill the RR input and timestamp
+      el('f-rr').value      = rrBreathCount
+      el('f-rr_time').value = currentTime()
+      checkRR()
+      // Show completion message
+      el('rr-complete-text').textContent = `${rrBreathCount} breaths/min logged!`
+      el('rr-complete-msg').classList.remove('hidden')
+      startBtn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Done'
+      startBtn.disabled  = false
+    }
+  }, 1000)
+}
+
+function resetRRTimer() {
+  clearInterval(rrTimerInterval)
+  rrTimerInterval = null
+  rrTimerRunning  = false
+  rrSecondsLeft   = 60
+  rrBreathCount   = 0
+  const countdown = el('rr-countdown')
+  countdown.textContent = '60'
+  countdown.classList.remove('text-rose-500')
+  el('rr-breath-count').textContent = '0'
+  el('rr-complete-msg').classList.add('hidden')
+  const startBtn = el('rr-start-btn')
+  startBtn.innerHTML = '<i class="fa-solid fa-play mr-2"></i>Start'
+  startBtn.disabled  = false
+}
+
+function stepRRBreaths(delta) {
+  rrBreathCount = Math.max(0, rrBreathCount + delta)
+  el('rr-breath-count').textContent = rrBreathCount
+}
+
 function checkGums() {
   const val = el('f-gum_color').value
   el('gum-alert').innerHTML = (val.includes('White') || val.includes('Blue'))
@@ -328,7 +444,183 @@ function checkStraining() {
 }
 
 function checkCollapse() {
-  el('collapse-field').style.display = el('f-collapse').checked ? 'block' : 'none'
+  const checked = el('f-collapse').checked
+  el('collapse-log-section').style.display = checked ? 'block' : 'none'
+  renderCollapseEpisodesList()
+  updateCollapseBadge()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Collapse episode logging
+// ─────────────────────────────────────────────────────────────────────────────
+
+function updateCollapseBadge() {
+  const badge = el('collapse-episode-badge')
+  if (!badge) return
+  const count = collapseEpisodes.length
+  if (count > 0 && el('f-collapse').checked) {
+    badge.textContent = count
+    badge.classList.remove('hidden')
+    badge.classList.add('inline-flex')
+  } else {
+    badge.classList.add('hidden')
+    badge.classList.remove('inline-flex')
+  }
+}
+
+function renderCollapseEpisodesList() {
+  const list = el('collapse-episodes-list')
+  if (!list) return
+  if (!collapseEpisodes.length) { list.innerHTML = ''; return }
+  list.innerHTML = collapseEpisodes.map((ep, i) => {
+    const pills = [ep.trigger, ep.duration, ep.behavior, ep.consciousness, ep.recovery].filter(Boolean)
+    return `
+      <div class="px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="font-medium text-red-700 shrink-0">${ep.time || '—'}</span>
+          <span class="flex flex-wrap gap-1 flex-1">
+            ${pills.map(p => `<span class="inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">${escHtml(p)}</span>`).join('')}
+          </span>
+          <button onclick="removeCollapseEpisode(${i})" class="shrink-0 text-red-300 hover:text-red-500 transition-colors">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        ${ep.notes ? `<p class="mt-1.5 text-gray-500 leading-snug pl-0.5">${escHtml(ep.notes)}</p>` : ''}
+      </div>`
+  }).join('')
+}
+
+function removeCollapseEpisode(index) {
+  collapseEpisodes.splice(index, 1)
+  if (!collapseEpisodes.length) el('f-collapse').checked = false, syncCheckLabel('collapse', false)
+  renderCollapseEpisodesList()
+  updateCollapseBadge()
+  checkCollapse()
+}
+
+function openCollapseSheet() {
+  el('collapse-ep-time').value  = currentTime()
+  el('collapse-ep-notes').value = ''
+  document.querySelectorAll('#collapse-sheet .cough-toggle-btn, #collapse-sheet .cough-pill-btn')
+    .forEach(b => b.classList.remove('selected'))
+  el('collapse-sheet').style.display = 'block'
+}
+
+function closeCollapseSheet() {
+  el('collapse-sheet').style.display = 'none'
+}
+
+function selectCollapseToggle(btn) {
+  const group = btn.dataset.group
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(b => b.classList.remove('selected'))
+  btn.classList.add('selected')
+}
+
+function logCollapseEpisode() {
+  const time    = el('collapse-ep-time').value
+  const trigEl  = document.querySelector('[data-group="col-trigger"].selected')
+  const durEl   = document.querySelector('[data-group="col-duration"].selected')
+  const behEl   = document.querySelector('[data-group="col-behavior"].selected')
+  const conEl   = document.querySelector('[data-group="col-consciousness"].selected')
+  const recEl   = document.querySelector('[data-group="col-recovery"].selected')
+  const notes   = el('collapse-ep-notes').value.trim()
+  collapseEpisodes.push({
+    time:          time || currentTime(),
+    trigger:       trigEl?.dataset.value || '',
+    duration:      durEl?.dataset.value  || '',
+    behavior:      behEl?.dataset.value  || '',
+    consciousness: conEl?.dataset.value  || '',
+    recovery:      recEl?.dataset.value  || '',
+    notes,
+  })
+  renderCollapseEpisodesList()
+  updateCollapseBadge()
+  closeCollapseSheet()
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cough episode logging
+// ─────────────────────────────────────────────────────────────────────────────
+
+function checkCoughing() {
+  const checked = el('f-coughing').checked
+  el('cough-log-section').style.display = checked ? 'block' : 'none'
+  renderCoughEpisodesList()
+  updateCoughBadge()
+}
+
+function updateCoughBadge() {
+  const badge = el('cough-episode-badge')
+  if (!badge) return
+  const count = coughEpisodes.length
+  if (count > 0 && el('f-coughing').checked) {
+    badge.textContent = count
+    badge.classList.remove('hidden')
+    badge.classList.add('inline-flex')
+  } else {
+    badge.classList.add('hidden')
+    badge.classList.remove('inline-flex')
+  }
+}
+
+function renderCoughEpisodesList() {
+  const list = el('cough-episodes-list')
+  if (!list) return
+  if (!coughEpisodes.length) { list.innerHTML = ''; return }
+  list.innerHTML = coughEpisodes.map((ep, i) => {
+    const pills = [ep.type, ep.context, ep.severity].filter(Boolean)
+    return `
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-xs">
+        <span class="font-medium text-gray-500 shrink-0">${ep.time || '—'}</span>
+        <span class="flex flex-wrap gap-1 flex-1">
+          ${pills.map(p => `<span class="inline-block px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">${escHtml(p)}</span>`).join('')}
+        </span>
+        <button onclick="removeCoughEpisode(${i})" class="shrink-0 text-gray-300 hover:text-red-400 transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>`
+  }).join('')
+}
+
+function removeCoughEpisode(index) {
+  coughEpisodes.splice(index, 1)
+  renderCoughEpisodesList()
+  updateCoughBadge()
+}
+
+function openCoughSheet() {
+  el('cough-time').value = currentTime()
+  // Clear all selections
+  document.querySelectorAll('#cough-sheet .cough-toggle-btn, #cough-sheet .cough-pill-btn')
+    .forEach(b => b.classList.remove('selected'))
+  el('cough-sheet').style.display = 'block'
+}
+
+function closeCoughSheet() {
+  el('cough-sheet').style.display = 'none'
+}
+
+function selectCoughToggle(btn) {
+  const group = btn.dataset.group
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(b => b.classList.remove('selected'))
+  btn.classList.add('selected')
+}
+
+function logCoughEpisode() {
+  const time     = el('cough-time').value
+  const typeEl   = document.querySelector('[data-group="cough-type"].selected')
+  const ctxEl    = document.querySelector('[data-group="cough-context"].selected')
+  const sevEl    = document.querySelector('[data-group="cough-severity"].selected')
+  if (!typeEl) { alert('Please select a cough type.'); return }
+  coughEpisodes.push({
+    time:     time     || currentTime(),
+    type:     typeEl?.dataset.value  || '',
+    context:  ctxEl?.dataset.value   || '',
+    severity: sevEl?.dataset.value   || '',
+  })
+  renderCoughEpisodesList()
+  updateCoughBadge()
+  closeCoughSheet()
 }
 
 function stepCount(id, delta) {
@@ -476,7 +768,14 @@ function renderTrends() {
       calDays.push({ dateStr: `${y}-${m}-${day}`, num: d.getDate(), dow: d.getDay() })
     }
 
-    const totalCollapse = calDays.filter(d => logMap[d.dateStr]?.collapse).length
+    const epCountForDay = d => {
+      const e = logMap[d]
+      if (!e?.collapse) return 0
+      return Array.isArray(e.collapse_episodes) && e.collapse_episodes.length
+        ? e.collapse_episodes.length
+        : (e.collapse_trigger || e.collapse_duration ? 1 : 1)
+    }
+    const totalCollapse = calDays.reduce((sum, d) => sum + epCountForDay(d.dateStr), 0)
     const startPad = calDays[0].dow
 
     const headers = ['S','M','T','W','T','F','S']
@@ -489,8 +788,10 @@ function renderTrends() {
       const entry      = logMap[dateStr]
       const isCollapse = entry?.collapse
       const isToday    = dateStr === todayStr
+      const epCount    = epCountForDay(dateStr)
       if (isCollapse) {
-        return `<div class="aspect-video flex items-center justify-center rounded-md bg-red-600 text-white text-xs font-bold cursor-pointer hover:bg-red-700 transition-colors" onclick="showCollapseDay('${dateStr}')" title="Collapse — tap for details">${num}</div>`
+        const badge = epCount > 1 ? `<span class="absolute top-0.5 right-0.5 text-[9px] font-bold leading-none">${epCount}</span>` : ''
+        return `<div class="relative aspect-video flex items-center justify-center rounded-md bg-red-600 text-white text-xs font-bold cursor-pointer hover:bg-red-700 transition-colors" onclick="showCollapseDay('${dateStr}')" title="${epCount} collapse episode${epCount !== 1 ? 's' : ''} — tap for details">${num}${badge}</div>`
       } else if (entry) {
         return `<div class="aspect-video flex items-center justify-center rounded-md ${isToday ? 'bg-blue-100 text-blue-700 font-semibold' : 'bg-gray-100 text-gray-500'} text-xs cursor-pointer hover:bg-gray-200 transition-colors" onclick="showCollapseDay('${dateStr}')">${num}</div>`
       } else {
@@ -576,6 +877,54 @@ function renderTrends() {
       },
     },
   })
+
+  // ── 1b. Cough Episodes (stacked bar by type) ─────────────────────────────
+  destroyChart('chart-cough')
+  el('chart-cough-wrap').innerHTML = '<canvas id="chart-cough"></canvas>'
+  const hasCoughData = recent.some(e => (e.cough_episodes || []).length > 0)
+  if (hasCoughData) {
+    charts['chart-cough'] = new Chart(el('chart-cough'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Dry',
+            data: recent.map(e => (e.cough_episodes || []).filter(ep => ep.type === 'Dry').length),
+            backgroundColor: 'rgba(59,130,246,0.85)',
+          },
+          {
+            label: 'Productive',
+            data: recent.map(e => (e.cough_episodes || []).filter(ep => ep.type === 'Productive').length),
+            backgroundColor: 'rgba(245,158,11,0.85)',
+          },
+          {
+            label: 'Post-drink',
+            data: recent.map(e => (e.cough_episodes || []).filter(ep => ep.type === 'Post-drink').length),
+            backgroundColor: 'rgba(16,185,129,0.85)',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+          x: { ...scaleX, stacked: true },
+          y: { ...scaleY, stacked: true, min: 0, ticks: { ...scaleY.ticks, stepSize: 1 } },
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { boxWidth: 14, font: { size: 11 }, color: '#6b7280' },
+          },
+        },
+      },
+    })
+  } else {
+    el('chart-cough-wrap').innerHTML = '<p class="text-center text-gray-400 text-sm py-8">No cough episodes recorded yet</p>'
+  }
 
   // ── 2. Weight ────────────────────────────────────────────────────────────
   destroyChart('chart-weight')
@@ -679,6 +1028,50 @@ function renderTrends() {
     },
   })
 
+  // ── 4b. Bowel Movements ───────────────────────────────────────────────────
+  destroyChart('chart-bowel')
+  el('chart-bowel-wrap').innerHTML = '<canvas id="chart-bowel"></canvas>'
+  const stoolColor = s => {
+    if (s === 'Normal formed') return 'rgba(34,197,94,0.75)'
+    if (s === 'Soft')          return 'rgba(234,179,8,0.75)'
+    if (s === 'Loose')         return 'rgba(249,115,22,0.75)'
+    if (s === 'Diarrhea')      return 'rgba(239,68,68,0.85)'
+    return                            'rgba(156,163,175,0.50)'
+  }
+  const bowelData = recent.map(e => parseInt(e.bowel_count) || null)
+  if (bowelData.some(v => v !== null)) {
+    charts['chart-bowel'] = new Chart(el('chart-bowel'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Bowel movements',
+          data: bowelData,
+          backgroundColor: recent.map(e => stoolColor(e.stool_quality)),
+          borderColor:     recent.map(e => stoolColor(e.stool_quality).replace(/[\d.]+\)$/, '1)')),
+          borderWidth: 1,
+          borderRadius: 4,
+        }],
+      },
+      options: {
+        ...chartOpts({ min: 0, ticks: { stepSize: 1, color: '#9ca3af', font: { size: 11 } } }),
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterLabel: ctx => {
+                const q = recent[ctx.dataIndex]?.stool_quality
+                return q ? `Quality: ${q}` : ''
+              },
+            },
+          },
+        },
+      },
+    })
+  } else {
+    el('chart-bowel-wrap').innerHTML = '<p class="text-center text-gray-400 text-sm py-8">No bowel movement data recorded yet</p>'
+  }
+
   // ── 5. Energy Level ──────────────────────────────────────────────────────
   destroyChart('chart-energy')
   el('chart-energy-wrap').innerHTML = '<canvas id="chart-energy"></canvas>'
@@ -731,9 +1124,13 @@ function renderTrends() {
       labels,
       datasets: [{
         label: 'Meds given (%)',
-        data: recent.map(e => Math.round((MED_IDS.filter(k => e[k]).length / 5) * 100)),
+        data: recent.map(e => {
+          const { given, total } = getMedCountForEntry(e)
+          return total > 0 ? Math.round((given / total) * 100) : 0
+        }),
         backgroundColor: recent.map(e => {
-          const pct = MED_IDS.filter(k => e[k]).length / 5
+          const { given, total } = getMedCountForEntry(e)
+          const pct = total > 0 ? given / total : 0
           return pct >= 1 ? 'rgba(22,163,74,0.7)' : pct >= 0.6 ? 'rgba(234,179,8,0.7)' : 'rgba(239,68,68,0.7)'
         }),
         borderWidth: 1,
@@ -760,7 +1157,7 @@ function renderHistory() {
     const rrBadge       = e.rr       ? `<span class="badge ${rrNum >= 30 ? 'badge-rr-warn' : 'badge-rr-ok'}">RR ${e.rr} bpm</span>` : ''
     const wtBadge       = e.weight   ? `<span class="badge badge-weight">${e.weight} lbs</span>` : ''
     const collapseBadge = e.collapse ? `<span class="badge badge-collapse"><i class="fa-solid fa-person-falling mr-1"></i>Collapse</span>` : ''
-    const medCount = MED_IDS.filter(k => e[k]).length
+    const { given: medGiven, total: medTotal } = getMedCountForEntry(e)
 
     const rows = [
       e.appetite          ? ['Appetite',  e.appetite.split('—')[0].trim()]  : null,
@@ -770,7 +1167,7 @@ function renderHistory() {
       e.straining         ? ['Straining', e.straining]                      : null,
       e.gum_color         ? ['Gums',      e.gum_color]                      : null,
       e.stool_quality     ? ['Stool',     e.stool_quality]                  : null,
-      ['Meds', `${medCount}/5`],
+      medTotal > 0 ? ['Meds', `${medGiven}/${medTotal}`] : null,
     ].filter(Boolean)
 
     return `
@@ -795,23 +1192,81 @@ function renderHistory() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CSV export
+// Export (CSV + JSON)
 // ─────────────────────────────────────────────────────────────────────────────
 
+function triggerDownload(content, filename, mimeType) {
+  const url = URL.createObjectURL(new Blob([content], { type: mimeType }))
+  const a   = Object.assign(document.createElement('a'), { href: url, download: filename })
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+function toggleExportMenu() {
+  const menu = el('export-menu')
+  menu.classList.toggle('hidden')
+  if (!menu.classList.contains('hidden')) {
+    setTimeout(() => document.addEventListener('click', onExportOutsideClick, { once: true }), 0)
+  }
+}
+
+function onExportOutsideClick(e) {
+  if (e.target.closest('#export-btn, #export-menu')) {
+    if (!el('export-menu').classList.contains('hidden'))
+      document.addEventListener('click', onExportOutsideClick, { once: true })
+    return
+  }
+  closeExportMenu()
+}
+
+function closeExportMenu() {
+  el('export-menu')?.classList.add('hidden')
+}
+
 function exportCSV() {
+  closeExportMenu()
   if (!log.length) { alert('No entries to export yet.'); return }
 
-  const MED_NAMES = {
-    pimo_am:   'Pimobendan (AM)',
-    enalapril: 'Enalapril',
-    furo_am:   'Furosemide (AM)',
-    pimo_pm:   'Pimobendan (PM)',
-    furo_pm:   'Furosemide (PM)',
+  const csvCell = v => {
+    const s = String(v ?? '')
+    return (s.includes(',') || s.includes('"') || s.includes('\n'))
+      ? `"${s.replace(/"/g, '""')}"` : s
+  }
+
+  const formatMeds = e => {
+    if (Array.isArray(e.meds)) {
+      const parts = []
+      e.meds.forEach(m => {
+        if (m.am) parts.push(`${m.name} (AM)`)
+        if (m.pm) parts.push(`${m.name} (PM)`)
+        if (m.am === undefined && m.pm === undefined && m.name) parts.push(m.name)
+      })
+      return parts.join(' | ') || 'None given'
+    }
+    const LEGACY = { pimo_am: 'Pimobendan (AM)', enalapril: 'Enalapril', furo_am: 'Furosemide (AM)', pimo_pm: 'Pimobendan (PM)', furo_pm: 'Furosemide (PM)' }
+    return Object.entries(LEGACY).filter(([k]) => e[k]).map(([, name]) => name).join(' | ') || 'None given'
+  }
+
+  const formatEpisodes = eps => {
+    if (!Array.isArray(eps) || !eps.length) return ''
+    return eps.map(ep => Object.entries(ep).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(', ')).join(' | ')
+  }
+
+  const formatCollapseEps = (e, eps) => {
+    if (Array.isArray(eps) && eps.length) return formatEpisodes(eps)
+    const parts = [
+      e.collapse_trigger      && `Trigger: ${e.collapse_trigger}`,
+      e.collapse_duration     && `Duration: ${e.collapse_duration}`,
+      e.collapse_behavior     && `Behavior: ${e.collapse_behavior}`,
+      e.collapse_consciousness && `Consciousness: ${e.collapse_consciousness}`,
+      e.collapse_recovery     && `Recovery: ${e.collapse_recovery}`,
+    ].filter(Boolean)
+    return parts.join(' | ')
   }
 
   const headers = [
     'Date', 'Medications Taken', 'Respiratory Rate (bpm)', 'Breathing Quality',
-    'Coughing', 'Collapse Episode Details',
+    'Coughing', 'Cough Episodes', 'Collapse Episode Details',
     'Appetite', 'Water Intake',
     'Urination Count', 'Urine Color', 'Urination Quality', 'Straining',
     'Bowel Count', 'Stool Quality',
@@ -819,27 +1274,16 @@ function exportCSV() {
   ]
 
   const rows = log.map(e => {
-    const meds = Object.entries(MED_NAMES)
-      .filter(([k]) => e[k])
-      .map(([, name]) => name)
-      .join(' | ') || 'None given'
-
-    const collapseParts = [
-      e.collapse_trigger      && `Trigger: ${e.collapse_trigger}`,
-      e.collapse_duration     && `Duration: ${e.collapse_duration}`,
-      e.collapse_behavior     && `Behavior: ${e.collapse_behavior}`,
-      e.collapse_consciousness && `Consciousness: ${e.collapse_consciousness}`,
-      e.collapse_recovery     && `Recovery: ${e.collapse_recovery}`,
-    ].filter(Boolean)
-    const collapseDetails = collapseParts.join(' | ')
-
+    const coughEps    = Array.isArray(e.cough_episodes)    ? e.cough_episodes    : []
+    const collapseEps = Array.isArray(e.collapse_episodes) ? e.collapse_episodes : []
     const vals = [
       e.date,
-      meds,
+      formatMeds(e),
       e.rr || '',
       e.breathing_quality || '',
-      e.coughing ? 'Yes' : '',
-      collapseDetails,
+      (e.coughing || coughEps.length) ? 'Yes' : '',
+      formatEpisodes(coughEps),
+      formatCollapseEps(e, collapseEps),
       e.appetite || '',
       e.water_intake || '',
       e.urination_count || '',
@@ -853,15 +1297,16 @@ function exportCSV() {
       e.weight || '',
       e.notes || '',
     ]
-
-    return vals.map(v => String(v).includes(',') ? `"${v}"` : v).join(',')
+    return vals.map(csvCell).join(',')
   })
 
-  const csv = [headers.join(','), ...rows].join('\n')
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-  const a   = Object.assign(document.createElement('a'), { href: url, download: `gizmo-log-${today()}.csv` })
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  triggerDownload([headers.join(','), ...rows].join('\n'), `gizmo-log-${today()}.csv`, 'text/csv')
+}
+
+function exportJSON() {
+  closeExportMenu()
+  if (!log.length) { alert('No entries to export yet.'); return }
+  triggerDownload(JSON.stringify(log, null, 2), `gizmo-log-${today()}.json`, 'application/json')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -948,6 +1393,95 @@ function copyShareLink() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Daily log — dynamic medication checkboxes
+// ─────────────────────────────────────────────────────────────────────────────
+
+function syncDynMedCheck(input) {
+  const lbl = input.closest('label')
+  if (!lbl) return
+  const dot = lbl.querySelector('.check-dot')
+  lbl.className = 'check-label' + (input.checked ? ' checked' : '')
+  if (dot) dot.textContent = input.checked ? '✓' : '○'
+}
+
+function renderDailyMeds() {
+  const container = el('daily-meds-container')
+  if (!container) return
+  const meds = (vetInfo.medications || []).filter(m => m.name)
+  if (!meds.length) {
+    container.innerHTML = '<p class="text-sm text-gray-400 italic">No medications configured — add them in the Vet Info tab.</p>'
+    return
+  }
+
+  const amMeds = meds.filter(m => (m.timing || 'both') !== 'pm')
+  const pmMeds = meds.filter(m => (m.timing || 'both') !== 'am')
+
+  const renderCb = (m, time) => {
+    const id = `dmed-${medKey(m.name)}-${time}`
+    return `
+      <label class="check-label" id="lbl-${id}">
+        <input type="checkbox" id="${id}" class="sr-only" onchange="syncDynMedCheck(this)">
+        <span class="check-dot">○</span><span>${escHtml(m.name)}</span>
+      </label>`
+  }
+
+  if (amMeds.length && pmMeds.length) {
+    container.innerHTML = `
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">AM (~8–9 AM)</div>
+          <div class="flex flex-col gap-2">${amMeds.map(m => renderCb(m, 'am')).join('')}</div>
+        </div>
+        <div>
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">PM (~8–9 PM)</div>
+          <div class="flex flex-col gap-2">${pmMeds.map(m => renderCb(m, 'pm')).join('')}</div>
+        </div>
+      </div>`
+  } else if (amMeds.length) {
+    container.innerHTML = `<div class="flex flex-col gap-2">${amMeds.map(m => renderCb(m, 'am')).join('')}</div>`
+  } else {
+    container.innerHTML = `<div class="flex flex-col gap-2">${pmMeds.map(m => renderCb(m, 'pm')).join('')}</div>`
+  }
+}
+
+function getMedFormData() {
+  const meds = (vetInfo.medications || []).filter(m => m.name)
+  return meds.map(m => {
+    const k = medKey(m.name)
+    const timing = m.timing || 'both'
+    const result = { name: m.name }
+    if (timing !== 'pm') result.am = el(`dmed-${k}-am`)?.checked || false
+    if (timing !== 'am') result.pm = el(`dmed-${k}-pm`)?.checked || false
+    return result
+  })
+}
+
+function setMedFormData(savedMeds) {
+  // Clear all current dynamic checkboxes first
+  const currentMeds = (vetInfo.medications || []).filter(m => m.name)
+  currentMeds.forEach(m => {
+    const k = medKey(m.name)
+    ;[`dmed-${k}-am`, `dmed-${k}-pm`].forEach(id => {
+      const inp = el(id)
+      if (inp) { inp.checked = false; syncDynMedCheck(inp) }
+    })
+  })
+  if (!savedMeds || !Array.isArray(savedMeds)) return
+  savedMeds.forEach(saved => {
+    const k = medKey(saved.name)
+    if (saved.am !== undefined) {
+      const inp = el(`dmed-${k}-am`)
+      if (inp) { inp.checked = !!saved.am; syncDynMedCheck(inp) }
+    }
+    if (saved.pm !== undefined) {
+      const inp = el(`dmed-${k}-pm`)
+      if (inp) { inp.checked = !!saved.pm; syncDynMedCheck(inp) }
+    }
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Vet info — medications table
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -962,14 +1496,26 @@ function collectVetInfoForm() {
   }
 }
 
+function timingSelect(selected) {
+  const opts = [
+    ['both', 'AM & PM'],
+    ['am',   'AM only'],
+    ['pm',   'PM only'],
+  ]
+  return `<select class="med-timing form-input w-24 shrink-0">${
+    opts.map(([v, l]) => `<option value="${v}"${selected === v ? ' selected' : ''}>${l}</option>`).join('')
+  }</select>`
+}
+
 function renderMedsTable(meds) {
   const body = el('meds-table-body')
   if (!body) return
   body.innerHTML = (meds || []).map((m, i) => `
     <div class="med-row flex gap-2 items-center mb-2" data-idx="${i}">
       <input type="text" class="med-name form-input flex-1 min-w-0" value="${escHtml(m.name)}" placeholder="Medication name">
-      <input type="text" class="med-dose form-input w-24 shrink-0" value="${escHtml(m.dose)}" placeholder="Dose">
-      <input type="text" class="med-freq form-input w-28 shrink-0" value="${escHtml(m.freq)}" placeholder="Frequency">
+      <input type="text" class="med-dose form-input w-20 shrink-0" value="${escHtml(m.dose)}" placeholder="Dose">
+      <input type="text" class="med-freq form-input w-24 shrink-0" value="${escHtml(m.freq)}" placeholder="Frequency">
+      ${timingSelect(m.timing || 'both')}
       <button class="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0" onclick="delMedRow(this)" title="Remove">
         <i class="fa-solid fa-trash-can text-xs"></i>
       </button>
@@ -982,8 +1528,9 @@ function addMedRow() {
   div.className = 'med-row flex gap-2 items-center mb-2'
   div.innerHTML = `
     <input type="text" class="med-name form-input flex-1 min-w-0" placeholder="Medication name">
-    <input type="text" class="med-dose form-input w-24 shrink-0" placeholder="Dose">
-    <input type="text" class="med-freq form-input w-28 shrink-0" placeholder="Frequency">
+    <input type="text" class="med-dose form-input w-20 shrink-0" placeholder="Dose">
+    <input type="text" class="med-freq form-input w-24 shrink-0" placeholder="Frequency">
+    ${timingSelect('both')}
     <button class="p-2 text-gray-400 hover:text-red-500 transition-colors shrink-0" onclick="delMedRow(this)" title="Remove">
       <i class="fa-solid fa-trash-can text-xs"></i>
     </button>`
@@ -997,9 +1544,10 @@ function delMedRow(btn) {
 
 function collectMeds() {
   return Array.from(document.querySelectorAll('#meds-table-body .med-row')).map(row => ({
-    name: row.querySelector('.med-name').value.trim(),
-    dose: row.querySelector('.med-dose').value.trim(),
-    freq: row.querySelector('.med-freq').value.trim(),
+    name:   row.querySelector('.med-name').value.trim(),
+    dose:   row.querySelector('.med-dose').value.trim(),
+    freq:   row.querySelector('.med-freq').value.trim(),
+    timing: row.querySelector('.med-timing').value || 'both',
   })).filter(m => m.name)
 }
 
@@ -1022,6 +1570,9 @@ async function saveVetInfo() {
     btn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i>Save Vet Info'
     btn.classList.remove('saved')
   }, 2500)
+
+  // Re-render medication checkboxes in the Today pane with updated list
+  renderDailyMeds()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1093,31 +1644,53 @@ function showCollapseDay(dateStr) {
   }
   detailEl.dataset.date = dateStr
 
-  const collapseFields = [
-    entry.collapse_trigger      ? ['Trigger',       entry.collapse_trigger]      : null,
-    entry.collapse_duration     ? ['Duration',      entry.collapse_duration]     : null,
-    entry.collapse_behavior     ? ['What happened', entry.collapse_behavior]     : null,
-    entry.collapse_consciousness ? ['Consciousness', entry.collapse_consciousness] : null,
-    entry.collapse_recovery     ? ['Recovery',      entry.collapse_recovery]     : null,
-  ].filter(Boolean)
+  // Gather episodes — prefer new array, fall back to legacy single-field
+  const episodes = Array.isArray(entry.collapse_episodes) && entry.collapse_episodes.length
+    ? entry.collapse_episodes
+    : (entry.collapse && (entry.collapse_trigger || entry.collapse_duration || entry.collapse_behavior)
+        ? [{ time: '', trigger: entry.collapse_trigger, duration: entry.collapse_duration,
+              behavior: entry.collapse_behavior, consciousness: entry.collapse_consciousness,
+              recovery: entry.collapse_recovery }]
+        : [])
 
+  const epCount    = episodes.length
   const isCollapse = entry.collapse
+
+  const episodeCards = episodes.map((ep, i) => {
+    const fields = [
+      ep.trigger       ? ['Trigger',       ep.trigger]       : null,
+      ep.duration      ? ['Duration',      ep.duration]      : null,
+      ep.behavior      ? ['What happened', ep.behavior]      : null,
+      ep.consciousness ? ['Consciousness', ep.consciousness] : null,
+      ep.recovery      ? ['Recovery',      ep.recovery]      : null,
+    ].filter(Boolean)
+    return `
+      <div class="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs ${i > 0 ? 'mt-2' : ''}">
+        <div class="flex items-center gap-2 mb-1.5">
+          <i class="fa-solid fa-person-falling text-red-500 text-xs"></i>
+          <span class="font-semibold text-red-700">Episode ${epCount > 1 ? i + 1 : ''}</span>
+          ${ep.time ? `<span class="text-red-400 ml-auto">${escHtml(ep.time)}</span>` : ''}
+        </div>
+        ${fields.length ? `
+          <div class="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            ${fields.map(([k, v]) => `
+              <div>
+                <div class="text-gray-400 mb-0.5">${k}</div>
+                <div class="text-red-800 font-medium">${escHtml(v)}</div>
+              </div>`).join('')}
+          </div>` : '<span class="text-red-400 italic">No details recorded</span>'}
+      </div>`
+  }).join('')
+
   detailEl.innerHTML = `
     <div class="pt-3 border-t ${isCollapse ? 'border-red-200' : 'border-gray-100'}">
       <div class="flex items-center justify-between mb-2">
         <span class="text-xs font-semibold ${isCollapse ? 'text-red-700' : 'text-gray-600'}">${formatDate(dateStr)}</span>
-        ${isCollapse ? '<span class="badge badge-collapse text-xs"><i class="fa-solid fa-person-falling mr-1"></i>Collapse</span>' : ''}
+        ${isCollapse ? `<span class="badge badge-collapse text-xs"><i class="fa-solid fa-person-falling mr-1"></i>${epCount} Collapse${epCount !== 1 ? 's' : ''}</span>` : ''}
       </div>
-      ${collapseFields.length ? `
-        <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-2">
-          ${collapseFields.map(([k, v]) => `
-            <div>
-              <div class="text-gray-400 mb-0.5">${k}</div>
-              <div class="text-gray-700 font-medium">${escHtml(v)}</div>
-            </div>`).join('')}
-        </div>` : ''}
+      ${episodeCards}
       ${entry.notes ? `
-        <div class="text-xs">
+        <div class="text-xs mt-2">
           <div class="text-gray-400 mb-0.5">Notes</div>
           <div class="text-gray-700">${escHtml(entry.notes)}</div>
         </div>` : ''}
@@ -1132,6 +1705,7 @@ function showCollapseDay(dateStr) {
   el('f-date').value = today()
   await loadLog()
   if (!Object.keys(vetInfo).length) vetInfo = { ...DEFAULT_VET_INFO }
+  renderDailyMeds()
   const todayEntry = log.find(e => e.date === today())
   setFormData(todayEntry ?? { date: today(), ...DEFAULT_ENTRY })
 })()
@@ -1144,7 +1718,9 @@ Object.assign(window, {
   switchTab,
   saveEntry,
   editEntry,
+  toggleExportMenu,
   exportCSV,
+  exportJSON,
   openSettings,
   closeSettings,
   saveSettings,
@@ -1155,6 +1731,7 @@ Object.assign(window, {
   addMedRow,
   delMedRow,
   saveVetInfo,
+  syncDynMedCheck,
   saveVetNote,
   updateCheck,
   checkRR,
@@ -1162,7 +1739,23 @@ Object.assign(window, {
   checkBlood,
   checkStraining,
   checkCollapse,
+  checkCoughing,
+  openCoughSheet,
+  closeCoughSheet,
+  selectCoughToggle,
+  logCoughEpisode,
+  removeCoughEpisode,
+  openCollapseSheet,
+  closeCollapseSheet,
+  selectCollapseToggle,
+  logCollapseEpisode,
+  removeCollapseEpisode,
   onDateChange,
   showCollapseDay,
   stepCount,
+  openRRSheet,
+  closeRRSheet,
+  startRRTimer,
+  resetRRTimer,
+  stepRRBreaths,
 })

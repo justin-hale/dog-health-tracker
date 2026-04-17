@@ -33,9 +33,19 @@
     </div>
     <div class="flex items-center gap-1">
       <div id="sync-status" class="flex items-center gap-1.5 mr-1"></div>
-      <button onclick="exportCSV()" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors" title="Export CSV">
-        <i class="fa-solid fa-file-csv text-sm"></i>
-      </button>
+      <div class="relative">
+        <button id="export-btn" onclick="toggleExportMenu()" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors" title="Export">
+          <i class="fa-solid fa-download text-sm"></i>
+        </button>
+        <div id="export-menu" class="hidden absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50 w-40">
+          <button onclick="exportCSV()" class="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left">
+            <i class="fa-solid fa-file-csv text-blue-500 w-4 text-center"></i>Export CSV
+          </button>
+          <button onclick="exportJSON()" class="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left border-t border-gray-100">
+            <i class="fa-solid fa-file-code text-green-500 w-4 text-center"></i>Export JSON
+          </button>
+        </div>
+      </div>
       <button onclick="openSettings()" class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors" title="Settings">
         <i class="fa-solid fa-gear text-sm"></i>
       </button>
@@ -94,37 +104,8 @@
         <i class="fa-solid fa-pills text-blue-500"></i>
         Medications Given
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">AM (~8–9 AM)</div>
-          <div class="flex flex-col gap-2">
-            <label class="check-label" id="lbl-pimo_am">
-              <input type="checkbox" id="f-pimo_am" class="sr-only" onchange="updateCheck('pimo_am')">
-              <span class="check-dot">○</span><span>Pimobendan</span>
-            </label>
-            <label class="check-label" id="lbl-enalapril">
-              <input type="checkbox" id="f-enalapril" class="sr-only" onchange="updateCheck('enalapril')">
-              <span class="check-dot">○</span><span>Enalapril</span>
-            </label>
-            <label class="check-label" id="lbl-furo_am">
-              <input type="checkbox" id="f-furo_am" class="sr-only" onchange="updateCheck('furo_am')">
-              <span class="check-dot">○</span><span>Furosemide</span>
-            </label>
-          </div>
-        </div>
-        <div>
-          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">PM (~8–9 PM)</div>
-          <div class="flex flex-col gap-2">
-            <label class="check-label" id="lbl-pimo_pm">
-              <input type="checkbox" id="f-pimo_pm" class="sr-only" onchange="updateCheck('pimo_pm')">
-              <span class="check-dot">○</span><span>Pimobendan</span>
-            </label>
-            <label class="check-label" id="lbl-furo_pm">
-              <input type="checkbox" id="f-furo_pm" class="sr-only" onchange="updateCheck('furo_pm')">
-              <span class="check-dot">○</span><span>Furosemide</span>
-            </label>
-          </div>
-        </div>
+      <div id="daily-meds-container">
+        <p class="text-sm text-gray-400 italic">Loading medications…</p>
       </div>
     </div>
 
@@ -137,7 +118,12 @@
       <div class="grid grid-cols-2 gap-3 mb-3">
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1" for="f-rr">Resting RR (breaths/min)</label>
-          <input type="number" id="f-rr" placeholder="e.g. 22" oninput="checkRR()" class="form-input">
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="f-rr" placeholder="e.g. 22" oninput="checkRR()" class="form-input">
+            <button type="button" onclick="openRRSheet()" class="shrink-0 p-2.5 rounded-lg text-rose-600 border border-rose-200 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 transition-colors" title="Count with 60-second timer">
+              <i class="fa-solid fa-stopwatch"></i>
+            </button>
+          </div>
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-500 mb-1" for="f-rr_time">Time Measured</label>
@@ -157,70 +143,30 @@
       </div>
       <div class="grid grid-cols-2 gap-2">
         <label class="check-label" id="lbl-coughing">
-          <input type="checkbox" id="f-coughing" class="sr-only" onchange="updateCheck('coughing')">
+          <input type="checkbox" id="f-coughing" class="sr-only" onchange="updateCheck('coughing'); checkCoughing()">
           <span class="check-dot">○</span><span>Coughing today</span>
+          <span id="cough-episode-badge" class="ml-auto hidden items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-blue-500 text-white text-xs font-bold">0</span>
         </label>
-        <label class="check-label" id="lbl-collapse">
+        <label class="check-label checked-warn" id="lbl-collapse">
           <input type="checkbox" id="f-collapse" class="sr-only" onchange="updateCheck('collapse'); checkCollapse()">
           <span class="check-dot">○</span>
           <span>Collapse episode</span>
-          <i class="fa-solid fa-circle-exclamation text-red-400 ml-auto text-xs"></i>
+          <span id="collapse-episode-badge" class="ml-auto hidden items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-red-600 text-white text-xs font-bold">0</span>
         </label>
       </div>
-      <div id="collapse-field" style="display:none;" class="mt-3 space-y-2">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Trigger</label>
-            <select id="f-collapse_trigger" class="form-input">
-              <option value="">Select...</option>
-              <option>Exertion</option>
-              <option>Excitement</option>
-              <option>Going outside</option>
-              <option>Spontaneous</option>
-              <option>Unknown</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Duration</label>
-            <select id="f-collapse_duration" class="form-input">
-              <option value="">Select...</option>
-              <option>&lt;10 sec</option>
-              <option>10–30 sec</option>
-              <option>30–60 sec</option>
-              <option>&gt;1 min</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-500 mb-1">What happened</label>
-          <select id="f-collapse_behavior" class="form-input">
-            <option value="">Select...</option>
-            <option>Froze / braced</option>
-            <option>Stumbled / staggered</option>
-            <option>Fell over</option>
-            <option>Couldn't stand</option>
-          </select>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Consciousness</label>
-            <select id="f-collapse_consciousness" class="form-input">
-              <option value="">Select...</option>
-              <option>Stayed alert</option>
-              <option>Briefly unresponsive</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Recovery</label>
-            <select id="f-collapse_recovery" class="form-input">
-              <option value="">Select...</option>
-              <option>Immediate</option>
-              <option>&lt;1 min</option>
-              <option>1–5 min</option>
-              <option>&gt;5 min</option>
-            </select>
-          </div>
-        </div>
+      <!-- Cough log section — shown when Coughing today is checked -->
+      <div id="cough-log-section" style="display:none;" class="mt-3">
+        <button class="btn-primary" onclick="openCoughSheet()">
+          <i class="fa-solid fa-plus mr-2"></i>Log a cough episode
+        </button>
+        <div id="cough-episodes-list" class="mt-2 space-y-1.5"></div>
+      </div>
+      <!-- Collapse log section — shown when Collapse episode is checked -->
+      <div id="collapse-log-section" style="display:none;" class="mt-3">
+        <button class="btn-collapse-log" onclick="openCollapseSheet()">
+          <i class="fa-solid fa-plus mr-2"></i>Log a collapse episode
+        </button>
+        <div id="collapse-episodes-list" class="mt-2 space-y-1.5"></div>
       </div>
     </div>
 
@@ -246,6 +192,7 @@
           <label class="block text-xs font-medium text-gray-500 mb-1" for="f-food_am">AM Meal (cups)</label>
           <select id="f-food_am" class="form-input">
             <option value="">Select...</option>
+            <option value="0">0</option>
             <option value="0.25">0.25</option>
             <option value="0.4">0.4</option>
             <option value="0.5">0.5</option>
@@ -256,6 +203,7 @@
           <label class="block text-xs font-medium text-gray-500 mb-1" for="f-food_pm">PM Meal (cups)</label>
           <select id="f-food_pm" class="form-input">
             <option value="">Select...</option>
+            <option value="0">0</option>
             <option value="0.25">0.25</option>
             <option value="0.4">0.4</option>
             <option value="0.5">0.5</option>
@@ -456,6 +404,20 @@
       <div id="chart-rr-wrap"><canvas id="chart-rr"></canvas></div>
     </div>
 
+    <!-- Cough Episodes -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-wind text-sky-500"></i>
+        Daily Cough Episodes (by type)
+      </div>
+      <div class="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs text-gray-500">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(59,130,246,0.85)"></span>Dry</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(245,158,11,0.85)"></span>Productive</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(16,185,129,0.85)"></span>Post-drink</span>
+      </div>
+      <div id="chart-cough-wrap"><canvas id="chart-cough"></canvas></div>
+    </div>
+
     <!-- Weight -->
     <div class="section-card">
       <div class="section-title">
@@ -494,6 +456,21 @@
       </div>
     </div>
 
+    <!-- Bowel Movements -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="fa-solid fa-circle-nodes text-amber-800"></i>
+        Bowel Movements
+      </div>
+      <div class="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs text-gray-500">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(34,197,94,0.75)"></span>Normal formed</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(234,179,8,0.75)"></span>Soft</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(249,115,22,0.75)"></span>Loose</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded" style="background:rgba(239,68,68,0.85)"></span>Diarrhea</span>
+      </div>
+      <div id="chart-bowel-wrap"><canvas id="chart-bowel"></canvas></div>
+    </div>
+
     <!-- Energy Level -->
     <div class="section-card">
       <div class="section-title">
@@ -530,8 +507,9 @@
       </div>
       <div class="hidden sm:flex gap-2 mb-1 px-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
         <span class="flex-1">Medication</span>
-        <span class="w-24">Dose</span>
-        <span class="w-28">Frequency</span>
+        <span class="w-20">Dose</span>
+        <span class="w-24">Frequency</span>
+        <span class="w-24">Timing</span>
         <span class="w-8"></span>
       </div>
       <div id="meds-table-body"></div>
@@ -1052,6 +1030,197 @@
   <div class="max-w-lg mx-auto px-4 py-3">
     <button class="btn-primary w-full" id="save-btn" onclick="saveEntry()">
       <i class="fa-solid fa-floppy-disk mr-2"></i>Save Today's Log
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ RR COUNTER BOTTOM SHEET -->
+<div id="rr-sheet" class="fixed inset-x-0 bottom-0 z-50" style="display:none;">
+  <div class="absolute inset-x-0 top-0 bottom-0 -z-10 translate-y-[-100vh] h-[200vh] bg-black/40" onclick="closeRRSheet()"></div>
+  <div class="relative bg-white rounded-t-2xl shadow-2xl px-5 pt-5 pb-8 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-semibold text-gray-800 text-base">
+        <i class="fa-solid fa-lungs text-rose-500 mr-2"></i>Count Respiratory Rate
+      </h3>
+      <button onclick="closeRRSheet()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Countdown display -->
+    <div class="text-center mb-5">
+      <div id="rr-countdown" class="text-7xl font-bold tabular-nums leading-none mb-1 transition-colors text-gray-800">60</div>
+      <div class="text-sm text-gray-500">seconds remaining</div>
+    </div>
+
+    <!-- Start / Reset -->
+    <div class="flex gap-3 mb-6">
+      <button id="rr-start-btn" type="button" onclick="startRRTimer()" class="btn-primary flex-1">
+        <i class="fa-solid fa-play mr-2"></i>Start
+      </button>
+      <button type="button" onclick="resetRRTimer()" class="btn-secondary flex-1">
+        <i class="fa-solid fa-rotate-left mr-2"></i>Reset
+      </button>
+    </div>
+
+    <!-- Breath counter -->
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-2 text-center">Breaths counted</label>
+      <div class="stepper mx-auto max-w-[200px]">
+        <button type="button" class="stepper-btn !px-5" onclick="stepRRBreaths(-1)">−</button>
+        <span id="rr-breath-count" class="stepper-val !text-xl !font-bold">0</span>
+        <button type="button" class="stepper-btn !px-5" onclick="stepRRBreaths(1)">+</button>
+      </div>
+    </div>
+
+    <!-- Completion message -->
+    <div id="rr-complete-msg" class="hidden text-center p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-medium mb-4">
+      <i class="fa-solid fa-circle-check mr-1.5"></i>
+      <span id="rr-complete-text"></span>
+    </div>
+
+    <!-- Tip -->
+    <p class="text-xs text-gray-400 text-center leading-relaxed">
+      Watch the chest rise and fall — each rise is one breath.<br>Tap <strong>+</strong> each time you see a breath.
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ COUGH BOTTOM SHEET -->
+<div id="cough-sheet" class="fixed inset-x-0 bottom-0 z-50" style="display:none;">
+  <div class="absolute inset-x-0 top-0 bottom-0 -z-10 translate-y-[-100vh] h-[200vh] bg-black/40" onclick="closeCoughSheet()"></div>
+  <div class="relative bg-white rounded-t-2xl shadow-2xl px-5 pt-5 pb-8 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-gray-800 text-base">Log Cough Episode</h3>
+      <button onclick="closeCoughSheet()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Time -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-1.5" for="cough-time">Time</label>
+      <input type="time" id="cough-time" class="form-input">
+    </div>
+
+    <!-- Type -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Type</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="cough-type" data-value="Dry" onclick="selectCoughToggle(this)">Dry</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-type" data-value="Productive" onclick="selectCoughToggle(this)">Productive</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-type" data-value="Post-drink" onclick="selectCoughToggle(this)">Post-drink</button>
+      </div>
+    </div>
+
+    <!-- Context -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Context</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="cough-pill-btn" data-group="cough-context" data-value="At rest" onclick="selectCoughToggle(this)">At rest</button>
+        <button class="cough-pill-btn" data-group="cough-context" data-value="After drinking" onclick="selectCoughToggle(this)">After drinking</button>
+        <button class="cough-pill-btn" data-group="cough-context" data-value="After activity" onclick="selectCoughToggle(this)">After activity</button>
+        <button class="cough-pill-btn" data-group="cough-context" data-value="Waking up" onclick="selectCoughToggle(this)">Waking up</button>
+      </div>
+    </div>
+
+    <!-- Severity -->
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Severity</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="cough-severity" data-value="Mild" onclick="selectCoughToggle(this)">Mild</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-severity" data-value="Moderate" onclick="selectCoughToggle(this)">Moderate</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-severity" data-value="Severe" onclick="selectCoughToggle(this)">Severe</button>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="logCoughEpisode()">
+      <i class="fa-solid fa-plus mr-2"></i>Add Episode
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ COLLAPSE BOTTOM SHEET -->
+<div id="collapse-sheet" class="fixed inset-x-0 bottom-0 z-50" style="display:none;">
+  <div class="absolute inset-x-0 top-0 bottom-0 -z-10 translate-y-[-100vh] h-[200vh] bg-black/40" onclick="closeCollapseSheet()"></div>
+  <div class="relative bg-white rounded-t-2xl shadow-2xl px-5 pt-5 pb-8 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-gray-800 text-base">
+        <i class="fa-solid fa-person-falling text-red-500 mr-2"></i>Log Collapse Episode
+      </h3>
+      <button onclick="closeCollapseSheet()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Time -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-1.5" for="collapse-ep-time">Time</label>
+      <input type="time" id="collapse-ep-time" class="form-input">
+    </div>
+
+    <!-- Trigger -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Trigger</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Exertion" onclick="selectCollapseToggle(this)">Exertion</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Excitement" onclick="selectCollapseToggle(this)">Excitement</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Going outside" onclick="selectCollapseToggle(this)">Going outside</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Spontaneous" onclick="selectCollapseToggle(this)">Spontaneous</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Unknown" onclick="selectCollapseToggle(this)">Unknown</button>
+      </div>
+    </div>
+
+    <!-- Duration -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Duration</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="&lt;10 sec" onclick="selectCollapseToggle(this)">&lt;10 sec</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="10–30 sec" onclick="selectCollapseToggle(this)">10–30 sec</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="30–60 sec" onclick="selectCollapseToggle(this)">30–60 sec</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="&gt;1 min" onclick="selectCollapseToggle(this)">&gt;1 min</button>
+      </div>
+    </div>
+
+    <!-- What happened -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">What happened</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Froze / braced" onclick="selectCollapseToggle(this)">Froze / braced</button>
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Stumbled / staggered" onclick="selectCollapseToggle(this)">Stumbled / staggered</button>
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Fell over" onclick="selectCollapseToggle(this)">Fell over</button>
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Couldn't stand" onclick="selectCollapseToggle(this)">Couldn't stand</button>
+      </div>
+    </div>
+
+    <!-- Consciousness -->
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Consciousness</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="col-consciousness" data-value="Stayed alert" onclick="selectCollapseToggle(this)">Stayed alert</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-consciousness" data-value="Briefly unresponsive" onclick="selectCollapseToggle(this)">Briefly unresponsive</button>
+      </div>
+    </div>
+
+    <!-- Recovery -->
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Recovery</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="Immediate" onclick="selectCollapseToggle(this)">Immediate</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="&lt;1 min" onclick="selectCollapseToggle(this)">&lt;1 min</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="1–5 min" onclick="selectCollapseToggle(this)">1–5 min</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="&gt;5 min" onclick="selectCollapseToggle(this)">&gt;5 min</button>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-1.5" for="collapse-ep-notes">Notes (optional)</label>
+      <textarea id="collapse-ep-notes" rows="2" placeholder="Any additional details…" class="form-input resize-none"></textarea>
+    </div>
+
+    <button class="btn-collapse-log" onclick="logCollapseEpisode()">
+      <i class="fa-solid fa-plus mr-2"></i>Add Episode
     </button>
   </div>
 </div>
