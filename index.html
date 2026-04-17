@@ -1413,5 +1413,220 @@
             </div>
             <!-- end pane-careguide -->
         </main>
+
+<!-- ══════════════════════════════════════════════════════ RR BOTTOM SHEET -->
+<div id="rr-sheet" class="fixed inset-x-0 bottom-0 z-50" style="display:none;">
+  <div class="absolute inset-x-0 top-0 bottom-0 -z-10 translate-y-[-100vh] h-[200vh] bg-black/40" onclick="closeRRSheet()"></div>
+  <div class="relative bg-white rounded-t-2xl shadow-2xl px-5 pt-5 pb-8 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-semibold text-gray-800 text-base">
+        <i class="fa-solid fa-lungs text-rose-500 mr-2"></i>Count Respiratory Rate
+      </h3>
+      <button onclick="closeRRSheet()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <div class="text-center mb-5">
+      <div id="rr-countdown" class="text-7xl font-bold tabular-nums leading-none mb-1 transition-colors text-gray-800">60</div>
+      <div class="text-sm text-gray-500">seconds remaining</div>
+    </div>
+    <div class="flex gap-3 mb-6">
+      <button id="rr-start-btn" type="button" onclick="startRRTimer()" class="btn-primary flex-1">
+        <i class="fa-solid fa-play mr-2"></i>Start
+      </button>
+      <button type="button" onclick="resetRRTimer()" class="btn-secondary flex-1">
+        <i class="fa-solid fa-rotate-left mr-2"></i>Reset
+      </button>
+    </div>
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-2 text-center">Breaths counted</label>
+      <div class="stepper mx-auto max-w-[200px]">
+        <button type="button" class="stepper-btn !px-5" onclick="stepRRBreaths(-1)">−</button>
+        <span id="rr-breath-count" class="stepper-val !text-xl !font-bold">0</span>
+        <button type="button" class="stepper-btn !px-5" onclick="stepRRBreaths(1)">+</button>
+      </div>
+    </div>
+    <div id="rr-complete-msg" class="hidden text-center p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm font-medium mb-4">
+      <i class="fa-solid fa-circle-check mr-1.5"></i>
+      <span id="rr-complete-text"></span>
+    </div>
+    <p class="text-xs text-gray-400 text-center leading-relaxed">
+      Watch the chest rise and fall — each rise is one breath.<br>Tap <strong>+</strong> each time you see a breath.
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ COUGH BOTTOM SHEET -->
+<div id="cough-sheet" class="fixed inset-x-0 bottom-0 z-50" style="display:none;">
+  <div class="absolute inset-x-0 top-0 bottom-0 -z-10 translate-y-[-100vh] h-[200vh] bg-black/40" onclick="closeCoughSheet()"></div>
+  <div class="relative bg-white rounded-t-2xl shadow-2xl px-5 pt-5 pb-8 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-gray-800 text-base">Log Cough Episode</h3>
+      <button onclick="closeCoughSheet()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-1.5" for="cough-time">Time</label>
+      <input type="time" id="cough-time" class="form-input">
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Type</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="cough-type" data-value="Dry" onclick="selectCoughToggle(this)">Dry</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-type" data-value="Productive" onclick="selectCoughToggle(this)">Productive</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-type" data-value="Post-drink" onclick="selectCoughToggle(this)">Post-drink</button>
+      </div>
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Context</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="cough-pill-btn" data-group="cough-context" data-value="At rest" onclick="selectCoughToggle(this)">At rest</button>
+        <button class="cough-pill-btn" data-group="cough-context" data-value="After drinking" onclick="selectCoughToggle(this)">After drinking</button>
+        <button class="cough-pill-btn" data-group="cough-context" data-value="After activity" onclick="selectCoughToggle(this)">After activity</button>
+        <button class="cough-pill-btn" data-group="cough-context" data-value="Waking up" onclick="selectCoughToggle(this)">Waking up</button>
+      </div>
+    </div>
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Severity</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="cough-severity" data-value="Mild" onclick="selectCoughToggle(this)">Mild</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-severity" data-value="Moderate" onclick="selectCoughToggle(this)">Moderate</button>
+        <button class="cough-toggle-btn flex-1" data-group="cough-severity" data-value="Severe" onclick="selectCoughToggle(this)">Severe</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="logCoughEpisode()">
+      <i class="fa-solid fa-plus mr-2"></i>Add Episode
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ COLLAPSE BOTTOM SHEET -->
+<div id="collapse-sheet" class="fixed inset-x-0 bottom-0 z-50" style="display:none;">
+  <div class="absolute inset-x-0 top-0 bottom-0 -z-10 translate-y-[-100vh] h-[200vh] bg-black/40" onclick="closeCollapseSheet()"></div>
+  <div class="relative bg-white rounded-t-2xl shadow-2xl px-5 pt-5 pb-8 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-semibold text-gray-800 text-base">
+        <i class="fa-solid fa-person-falling text-red-500 mr-2"></i>Log Collapse Episode
+      </h3>
+      <button onclick="closeCollapseSheet()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-1.5" for="collapse-ep-time">Time</label>
+      <input type="time" id="collapse-ep-time" class="form-input">
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Trigger</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Exertion" onclick="selectCollapseToggle(this)">Exertion</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Excitement" onclick="selectCollapseToggle(this)">Excitement</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Going outside" onclick="selectCollapseToggle(this)">Going outside</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Spontaneous" onclick="selectCollapseToggle(this)">Spontaneous</button>
+        <button class="cough-pill-btn" data-group="col-trigger" data-value="Unknown" onclick="selectCollapseToggle(this)">Unknown</button>
+      </div>
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Duration</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="&lt;10 sec" onclick="selectCollapseToggle(this)">&lt;10 sec</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="10–30 sec" onclick="selectCollapseToggle(this)">10–30 sec</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="30–60 sec" onclick="selectCollapseToggle(this)">30–60 sec</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-duration" data-value="&gt;1 min" onclick="selectCollapseToggle(this)">&gt;1 min</button>
+      </div>
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">What happened</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Froze / braced" onclick="selectCollapseToggle(this)">Froze / braced</button>
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Stumbled / staggered" onclick="selectCollapseToggle(this)">Stumbled / staggered</button>
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Fell over" onclick="selectCollapseToggle(this)">Fell over</button>
+        <button class="cough-pill-btn" data-group="col-behavior" data-value="Couldn't stand" onclick="selectCollapseToggle(this)">Couldn't stand</button>
+      </div>
+    </div>
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Consciousness</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="col-consciousness" data-value="Stayed alert" onclick="selectCollapseToggle(this)">Stayed alert</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-consciousness" data-value="Briefly unresponsive" onclick="selectCollapseToggle(this)">Briefly unresponsive</button>
+      </div>
+    </div>
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-2">Recovery</label>
+      <div class="flex gap-2">
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="Immediate" onclick="selectCollapseToggle(this)">Immediate</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="&lt;1 min" onclick="selectCollapseToggle(this)">&lt;1 min</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="1–5 min" onclick="selectCollapseToggle(this)">1–5 min</button>
+        <button class="cough-toggle-btn flex-1" data-group="col-recovery" data-value="&gt;5 min" onclick="selectCollapseToggle(this)">&gt;5 min</button>
+      </div>
+    </div>
+    <div class="mb-5">
+      <label class="block text-xs font-medium text-gray-500 mb-1.5" for="collapse-ep-notes">Notes (optional)</label>
+      <textarea id="collapse-ep-notes" rows="2" placeholder="Any additional details…" class="form-input resize-none"></textarea>
+    </div>
+    <button class="btn-collapse-log" onclick="logCollapseEpisode()">
+      <i class="fa-solid fa-plus mr-2"></i>Add Episode
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SETTINGS MODAL -->
+<div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style="display:none;">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-lg font-bold text-gray-900">
+          <i class="fa-solid fa-cloud mr-2 text-blue-500"></i>Cloud Sync Setup
+        </h2>
+        <button onclick="closeSettings()" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-sm text-gray-500 mb-5">Store entries in a GitHub Gist so history syncs across any device. Anyone with the share link can view — no login needed to read.</p>
+      <div class="mb-4">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Step 1 — GitHub Token (stays on this device)</div>
+        <input type="password" id="cfg-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" class="form-input mb-2">
+        <p class="text-xs text-gray-400 leading-relaxed">Create at <strong>github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)</strong>. Select <strong>gist</strong> scope only.</p>
+      </div>
+      <div class="mb-4">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Step 2 — Gist Storage</div>
+        <div id="gist-no-id">
+          <button class="btn-primary mb-2" onclick="handleCreateGist()">
+            <i class="fa-solid fa-plus mr-1.5"></i>Create new Gist for Gizmo's data
+          </button>
+          <div class="text-center text-xs text-gray-400 mb-2">— or link an existing Gist —</div>
+          <div class="flex gap-2">
+            <input type="text" id="cfg-gist-id" placeholder="Gist ID (32-char hex string)" class="form-input flex-1">
+            <button class="btn-secondary shrink-0" onclick="handleLinkGist()">Link</button>
+          </div>
+        </div>
+        <div id="gist-has-id" style="display:none;">
+          <div class="alert-info mb-3">
+            <i class="fa-solid fa-circle-check shrink-0"></i>
+            <span>Gist linked: <span id="gist-id-display" class="font-mono text-xs break-all"></span></span>
+          </div>
+          <button class="btn-danger" onclick="handleUnlinkGist()">
+            <i class="fa-solid fa-link-slash mr-1.5"></i>Unlink Gist
+          </button>
+        </div>
+        <p id="gist-msg" class="text-sm mt-2"></p>
+      </div>
+      <div id="share-section" style="display:none;" class="mb-4">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Share Link (read-only for anyone)</div>
+        <div id="share-link-box" class="bg-gray-50 border border-gray-200 rounded-lg p-3 font-mono text-xs text-gray-600 break-all mb-2"></div>
+        <button class="btn-secondary w-full" onclick="copyShareLink()">
+          <i class="fa-solid fa-copy mr-1.5"></i>Copy share link
+        </button>
+        <p id="copy-msg" class="text-xs text-center mt-1 text-green-600"></p>
+      </div>
+      <div class="flex gap-2 pt-4 border-t border-gray-100">
+        <button class="btn-primary flex-1" onclick="saveSettings()">Save Settings</button>
+        <button class="btn-secondary" onclick="closeSettings()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
     </body>
 </html>
